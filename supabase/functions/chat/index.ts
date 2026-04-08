@@ -32,6 +32,27 @@ IMPORTANT OUTPUT FORMAT:
 - Add a brief summary BEFORE the code block explaining the website you built (2-3 sentences max).
 - Add SEO meta tags, favicon placeholder, and proper semantic HTML.
 
+IMAGE GUIDELINES (CRITICAL):
+- ALWAYS include relevant, high-quality images from Unsplash in the generated website.
+- Use Unsplash Source URLs for images: https://images.unsplash.com/photo-{id}?w={width}&q=80&fit=crop
+- Choose images that match the business type and context. Examples:
+  - Sports business → use images of athletes, stadiums, sports equipment, fitness
+  - Café/Coffee shop → use images of coffee cups, cozy interiors, baristas, pastries
+  - Restaurant → use images of food, dining, chefs, restaurant interiors
+  - Tech company → use images of laptops, code, modern offices, innovation
+  - Fashion → use images of clothing, models, runway, boutiques
+  - Real estate → use images of houses, buildings, interiors, architecture
+  - Travel → use images of landscapes, destinations, adventure, tourism
+  - Health/Medical → use images of doctors, wellness, medical equipment, healthy lifestyle
+- Use at least 4-6 images throughout the website (hero background, about section, services cards, gallery, testimonials).
+- For hero sections, use large background images with overlay gradients for text readability.
+- For cards/services, use appropriately sized images (400-600px width).
+- Use the Unsplash search API format for dynamic relevant images: https://source.unsplash.com/800x600/?{keyword},{keyword2}
+- Alternative reliable sources: https://images.unsplash.com or use specific curated Unsplash photo URLs.
+- ALWAYS add descriptive alt text to images for accessibility.
+- Use object-fit: cover and proper aspect ratios for images.
+- Add loading="lazy" attribute to images below the fold.
+
 STYLE GUIDELINES:
 - Make it visually stunning and professional — not generic or template-looking.
 - Use subtle animations (fade-in on scroll, hover transforms, smooth transitions).
