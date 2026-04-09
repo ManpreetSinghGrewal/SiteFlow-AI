@@ -33,25 +33,31 @@ IMPORTANT OUTPUT FORMAT:
 - Add SEO meta tags, favicon placeholder, and proper semantic HTML.
 
 IMAGE GUIDELINES (CRITICAL):
-- ALWAYS include relevant, high-quality images from Unsplash in the generated website.
-- Use Unsplash Source URLs for images: https://images.unsplash.com/photo-{id}?w={width}&q=80&fit=crop
-- Choose images that match the business type and context. Examples:
-  - Sports business → use images of athletes, stadiums, sports equipment, fitness
-  - Café/Coffee shop → use images of coffee cups, cozy interiors, baristas, pastries
-  - Restaurant → use images of food, dining, chefs, restaurant interiors
-  - Tech company → use images of laptops, code, modern offices, innovation
-  - Fashion → use images of clothing, models, runway, boutiques
-  - Real estate → use images of houses, buildings, interiors, architecture
-  - Travel → use images of landscapes, destinations, adventure, tourism
-  - Health/Medical → use images of doctors, wellness, medical equipment, healthy lifestyle
-- Use at least 4-6 images throughout the website (hero background, about section, services cards, gallery, testimonials).
+- ALWAYS include relevant, high-quality images using these WORKING image sources:
+  - Unsplash direct URLs (ALWAYS WORKING): use specific photo IDs like https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80&fit=crop
+  - Pexels: https://images.pexels.com/photos/{id}/pexels-photo-{id}.jpeg?auto=compress&w=800
+  - Picsum (random but reliable): https://picsum.photos/seed/{keyword}/800/600
+  - Lorem Picsum with specific IDs: https://picsum.photos/id/{number}/800/600
+- Here are REAL working Unsplash photo IDs to use by category:
+  - Sports/Fitness: photo-1517649763962-0c623066013b, photo-1461896836934-bd45ba055097, photo-1534438327276-14e5300c3a48, photo-1571019614242-c5c5dee9f50b, photo-1552674605-db6ffd4facb5
+  - Coffee/Café: photo-1495474472287-4d71bcdd2085, photo-1501339847302-ac426a4a7cbb, photo-1509042239860-f550ce710b93, photo-1442512595331-e89e73853f31, photo-1559496417-e7f25cb247f3
+  - Restaurant/Food: photo-1504674900247-0877df9cc836, photo-1555396273-367ea4eb4db5, photo-1414235077428-338989a2e8c0, photo-1517248135467-4c7edcad34c4, photo-1466978913421-dad2ebd01d17
+  - Tech/Software: photo-1518770660439-4636190af475, photo-1461749280684-dccba630e2f6, photo-1504384308090-c894fdcc538d, photo-1519389950473-47ba0277781c, photo-1550751827-4bd374c3f58b
+  - Fashion/Beauty: photo-1445205170230-053b83016050, photo-1490481651871-ab68de25d43d, photo-1469334031218-e382a71b716b, photo-1441984904996-e0b6ba687e04, photo-1558618666-fcd25c85f82e
+  - Real Estate: photo-1560518883-ce09059eeffa, photo-1564013799919-ab600027ffc6, photo-1512917774080-9991f1c4c750, photo-1600596542815-ffad4c1539a9, photo-1600585154340-be6161a56a0c
+  - Travel: photo-1476514525535-07fb3b4ae5f1, photo-1488085061387-422e29b40080, photo-1469854523086-cc02fe5d8800, photo-1507525428034-b723cf961d3e, photo-1530789253388-582c481c54b0
+  - Health/Medical: photo-1576091160399-112ba8d25d1d, photo-1505751172876-fa1923c5c528, photo-1571019613454-1cb2f99b2d8b, photo-1559757175-5700dde675bc, photo-1532938911079-1b06ac7ceec7
+  - Education: photo-1503676260728-1c00da094a0b, photo-1523050854058-8df90110c8f1, photo-1427504494785-3a9ca7044f45, photo-1509062522246-3755977927d7, photo-1497633762265-9d179a990aa6
+  - General Business: photo-1454165804606-c3d57bc86b40, photo-1507679799987-c73779587ccf, photo-1486406146926-c627a92ad1ab, photo-1573164713988-8665fc963095, photo-1556761175-5973dc0f32e7
+- Use format: https://images.unsplash.com/photo-{id}?w={width}&h={height}&q=80&fit=crop
+- Use at least 5-8 images throughout the website (hero background, about section, services cards, gallery, testimonials, team).
 - For hero sections, use large background images with overlay gradients for text readability.
-- For cards/services, use appropriately sized images (400-600px width).
-- Use the Unsplash search API format for dynamic relevant images: https://source.unsplash.com/800x600/?{keyword},{keyword2}
-- Alternative reliable sources: https://images.unsplash.com or use specific curated Unsplash photo URLs.
+- For cards/services, use appropriately sized images (w=600).
+- For ANY business type not listed above, pick the closest category or use General Business images.
 - ALWAYS add descriptive alt text to images for accessibility.
 - Use object-fit: cover and proper aspect ratios for images.
 - Add loading="lazy" attribute to images below the fold.
+- NEVER use source.unsplash.com - it is DEPRECATED and broken.
 
 STYLE GUIDELINES:
 - Make it visually stunning and professional — not generic or template-looking.
