@@ -32,40 +32,15 @@ IMPORTANT OUTPUT FORMAT:
 - Add a brief summary BEFORE the code block explaining the website you built (2-3 sentences max).
 - Add SEO meta tags, favicon placeholder, and proper semantic HTML.
 
-IMAGE GUIDELINES (CRITICAL — IMAGES MUST LOAD):
-- Use ONLY these 100% reliable image sources that ALWAYS load:
-  1. PRIMARY — Picsum Photos (always works, seeded for consistency):
-     https://picsum.photos/seed/{descriptive-keyword}/{width}/{height}
-     Examples:
-     - https://picsum.photos/seed/spa-massage/800/600
-     - https://picsum.photos/seed/coffee-shop/1600/900
-     - https://picsum.photos/seed/gym-fitness/600/400
-     - https://picsum.photos/seed/restaurant-food/800/600
-     Use descriptive, hyphenated keywords related to the business for each image.
-     Each image MUST have a UNIQUE seed keyword — never repeat the same seed on a page.
-  2. SECONDARY — Picsum by ID (curated, always loads):
-     https://picsum.photos/id/{number}/{width}/{height}
-     Good IDs by mood: 1-10 (nature), 20-30 (architecture), 40-50 (tech), 60-70 (food), 80-90 (people), 100-110 (city)
-- For hero sections: use 1600/900 with a dark gradient overlay (rgba(0,0,0,0.5)) so text is readable.
-- For service/feature cards: use 600/400.
-- For about/team sections: use 800/600.
-- For testimonial backgrounds: use 1200/800.
-- Include at least 5-8 images per website.
-- Use UNIQUE descriptive seed keywords for EACH image. Examples for a spa:
-  - Hero: picsum.photos/seed/luxury-spa-relax/1600/900
-  - About: picsum.photos/seed/spa-interior-calm/800/600
-  - Service 1: picsum.photos/seed/hot-stone-massage/600/400
-  - Service 2: picsum.photos/seed/facial-treatment-beauty/600/400
-  - Service 3: picsum.photos/seed/aromatherapy-wellness/600/400
-  - Testimonial: picsum.photos/seed/happy-spa-customer/800/600
-  - Gallery: picsum.photos/seed/zen-garden-peaceful/600/400
-  - CTA: picsum.photos/seed/spa-pool-luxury/1200/800
-- ALWAYS add descriptive alt text.
-- ALWAYS use object-fit: cover and proper aspect ratios.
-- ALWAYS add loading="lazy" to images below the fold.
-- NEVER use source.unsplash.com — it is broken.
-- NEVER use placeholder.com or via.placeholder.com.
-- NEVER leave any image as a broken link or placeholder.
+IMAGE GUIDELINES (CRITICAL):
+- The app automatically curates website imagery after generation, so focus on placing the RIGHT image slots in the RIGHT sections.
+- Include 5-8 images across the page (hero, about, services, gallery, testimonials, CTA).
+- ALWAYS add descriptive alt text that matches the business and section.
+- If you include image URLs, they MUST be full absolute https:// URLs.
+- NEVER use picsum.photos, source.unsplash.com, placeholder.com, via.placeholder.com, or broken/demo image hosts.
+- You may use semantic placeholder names in src/background-image values such as hero-image, about-image, service-image-1, gallery-image-2, team-image, testimonial-image.
+- Make sure image placements are contextually correct: spa for spa sites, coffee for cafés, fitness for gyms, etc.
+- Use object-fit: cover, strong aspect ratios, and loading="lazy" below the fold.
 
 STYLE GUIDELINES:
 - Make it visually stunning and professional — not generic or template-looking.
