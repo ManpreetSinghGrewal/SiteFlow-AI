@@ -105,13 +105,13 @@ const Index = () => {
         <div className="flex items-center gap-2">
           <img src="/siteflow-logo.png" alt="SiteFlow AI" className="w-7 h-7 rounded-lg object-cover" />
           <h1 className="font-semibold text-sm text-foreground">SiteFlow AI</h1>
+          <a href="/about" className="text-xs text-muted-foreground hover:text-foreground transition-colors ml-4">About Us</a>
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
           {(["input", "generating", "review"] as AppStep[]).map((s, i) => (
             <div key={s} className="flex items-center gap-1.5">
-              <div className={`w-2 h-2 rounded-full transition-colors ${
-                s === step ? "bg-primary" : step === "review" || (step === "generating" && i === 0) ? "bg-primary/40" : "bg-border"
-              }`} />
+              <div className={`w-2 h-2 rounded-full transition-colors ${s === step ? "bg-primary" : step === "review" || (step === "generating" && i === 0) ? "bg-primary/40" : "bg-border"
+                }`} />
               <span className={`text-xs hidden sm:inline ${s === step ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                 {s === "input" ? "Brief" : s === "generating" ? "Generate" : "Review"}
               </span>

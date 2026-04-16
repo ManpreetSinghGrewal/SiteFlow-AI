@@ -13,7 +13,7 @@ const Landing = () => {
           <span className="font-bold text-lg text-gray-900 tracking-tight">SiteFlow AI</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-          <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
+          <a href="/about" className="hover:text-gray-900 transition-colors">About Us</a>
           <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>
           <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
         </div>
@@ -93,14 +93,15 @@ const Landing = () => {
           <div className="aspect-video bg-gray-100 rounded-b-xl flex items-center justify-center group cursor-pointer relative">
             <video 
               className="w-full h-full object-cover"
-              controls={false}
+              controls
               autoPlay
               muted
               loop
               playsInline
             >
-              {/* Replace the next line with <source src="/your-video.mp4" type="video/mp4" /> */}
-              <source src="https://assets.mixkit.co/videos/preview/mixkit-working-with-a-laptop-outside-4133-large.mp4" type="video/mp4" />
+              <source src="/ss.mp4" type="video/mp4" />
+              <source src="/ss.mp4" type="video/quicktime" />
+              Your browser does not support the video tag or the file format.
             </video>
             <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors pointer-events-none" />
           </div>
