@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Zap } from "lucide-react";
+
 import BrandInput, { BrandData } from "@/components/BrandInput";
 import GenerationFlow from "@/components/GenerationFlow";
 import HumanReview from "@/components/HumanReview";
@@ -103,10 +103,8 @@ const Index = () => {
       {/* Top bar */}
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Zap className="w-3.5 h-3.5 text-primary-foreground" />
-          </div>
-          <h1 className="font-semibold text-sm text-foreground">WebForge AI</h1>
+          <img src="/siteflow-logo.png" alt="SiteFlow AI" className="w-7 h-7 rounded-lg object-cover" />
+          <h1 className="font-semibold text-sm text-foreground">SiteFlow AI</h1>
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
           {(["input", "generating", "review"] as AppStep[]).map((s, i) => (

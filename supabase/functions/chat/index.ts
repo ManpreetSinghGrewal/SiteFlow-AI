@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are WebForge AI — a fast, intelligent, and adaptable website builder chatbot.
+const SYSTEM_PROMPT = `You are SiteFlow AI — a fast, intelligent, and adaptable website builder chatbot.
 
 Rules:
 - Analyze user input and extract: business name, type, tone, colors, audience, goal, location, unique offerings, etc.

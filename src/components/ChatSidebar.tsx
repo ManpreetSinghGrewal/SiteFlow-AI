@@ -1,4 +1,4 @@
-import { Plus, MessageSquare, Trash2, Zap } from "lucide-react";
+import { Plus, MessageSquare, Trash2 } from "lucide-react";
 import type { Conversation } from "@/hooks/useChat";
 
 interface Props {
@@ -25,10 +25,8 @@ const ChatSidebar = ({ conversations, activeId, onSelect, onCreate, onDelete, op
       >
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold text-foreground tracking-tight">WebForge AI</span>
+            <img src="/siteflow-logo.png" alt="SiteFlow AI" className="w-8 h-8 rounded-lg object-cover" />
+            <span className="font-semibold text-foreground tracking-tight">SiteFlow AI</span>
           </div>
         </div>
 
