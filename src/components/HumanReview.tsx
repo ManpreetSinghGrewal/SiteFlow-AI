@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import {
   Eye, EyeOff, Download, RotateCcw, Sparkles,
-  Monitor, Tablet, Smartphone, ExternalLink, ChevronRight,
+  Monitor, Tablet, Smartphone, ExternalLink, ChevronRight, Image,
 } from "lucide-react";
+import ImageSwapPanel from "./ImageSwapPanel";
 
 interface Props {
   html: string;
@@ -10,6 +11,7 @@ interface Props {
   onRegenerate: () => void;
   brandName: string;
   brandType: string;
+  onHtmlChange?: (html: string) => void;
 }
 
 interface Section {
@@ -30,10 +32,14 @@ const DEFAULT_SECTIONS: Section[] = [
   { id: "footer", label: "Footer", enabled: true, insight: "Essential for SEO and navigation completeness" },
 ];
 
-const HumanReview = ({ html, onBack, onRegenerate, brandName, brandType }: Props) => {
+type RightTab = "insights" | "images";
+
+const HumanReview = ({ html, onBack, onRegenerate, brandName, brandType, onHtmlChange }: Props) => {
   const [sections, setSections] = useState<Section[]>(DEFAULT_SECTIONS);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [rightTab, setRightTab] = useState<RightTab>("insights");
+  const [currentHtml, setCurrentHtml] = useState(html);
 
   const iframeWidth = device === "mobile" ? "375px" : device === "tablet" ? "768px" : "100%";
 
@@ -43,13 +49,18 @@ const HumanReview = ({ html, onBack, onRegenerate, brandName, brandType }: Props
     );
   };
 
+  const handleHtmlChange = (newHtml: string) => {
+    setCurrentHtml(newHtml);
+    onHtmlChange?.(newHtml);
+  };
+
   const openInNewTab = () => {
     const win = window.open("", "_blank");
-    if (win) { win.document.write(html); win.document.close(); }
+    if (win) { win.document.write(currentHtml); win.document.close(); }
   };
 
   const downloadHtml = () => {
-    const blob = new Blob([html], { type: "text/html" });
+    const blob = new Blob([currentHtml], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -157,7 +168,7 @@ const HumanReview = ({ html, onBack, onRegenerate, brandName, brandType }: Props
             style={{ width: iframeWidth, maxWidth: "100%" }}
           >
             <iframe
-              srcDoc={html}
+              srcDoc={currentHtml}
               title="Website Preview"
               className="w-full h-full border-0"
               sandbox="allow-scripts allow-same-origin"
@@ -166,61 +177,82 @@ const HumanReview = ({ html, onBack, onRegenerate, brandName, brandType }: Props
         </div>
       </div>
 
-      {/* Right Column: AI Insights */}
+      {/* Right Column: Tabbed - Insights / Images */}
       <div className="w-72 border-l border-border flex flex-col bg-card">
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">AI Insights</h3>
-          </div>
+        {/* Tab header */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setRightTab("insights")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-medium transition-colors ${
+              rightTab === "insights"
+                ? "text-primary border-b-2 border-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Insights
+          </button>
+          <button
+            onClick={() => setRightTab("images")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-medium transition-colors ${
+              rightTab === "images"
+                ? "text-primary border-b-2 border-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Image className="w-3.5 h-3.5" />
+            Edit Images
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-4">
-          {/* Brand summary */}
-          <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
-            <p className="text-xs font-medium text-primary">Brand Summary</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong>{brandName || "Your business"}</strong> — {brandType || "General"} category.
-              Website optimized for engagement and conversions.
-            </p>
-          </div>
 
-          {/* Selected section insight */}
-          {activeInsight ? (
-            <div className="p-3 rounded-xl border border-border space-y-2 animate-fade-in-up">
-              <p className="text-xs font-medium text-foreground">{activeInsight.label}</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{activeInsight.insight}</p>
-              <div className="flex items-center gap-1.5 pt-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-[10px] text-primary font-medium">AI Recommendation</span>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3 rounded-xl border border-dashed border-border">
-              <p className="text-xs text-muted-foreground text-center">
-                Click a section to see AI insights
+        {rightTab === "insights" ? (
+          <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-4">
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+              <p className="text-xs font-medium text-primary">Brand Summary</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong>{brandName || "Your business"}</strong> — {brandType || "General"} category.
+                Website optimized for engagement and conversions.
               </p>
             </div>
-          )}
 
-          {/* Design decisions */}
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-foreground">Design Decisions</p>
-            {[
-              { title: "Color Palette", desc: "Chosen to match brand personality and improve readability" },
-              { title: "Typography", desc: "Google Fonts selected for visual hierarchy and load speed" },
-              { title: "Layout", desc: "Mobile-first responsive grid with optimal content flow" },
-              { title: "Images", desc: "Contextual imagery matched to business category" },
-            ].map((item) => (
-              <div key={item.title} className="flex gap-2">
-                <div className="w-1 rounded-full bg-primary/30 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-medium text-foreground">{item.title}</p>
-                  <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+            {activeInsight ? (
+              <div className="p-3 rounded-xl border border-border space-y-2 animate-fade-in-up">
+                <p className="text-xs font-medium text-foreground">{activeInsight.label}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{activeInsight.insight}</p>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <span className="text-[10px] text-primary font-medium">AI Recommendation</span>
                 </div>
               </div>
-            ))}
+            ) : (
+              <div className="p-3 rounded-xl border border-dashed border-border">
+                <p className="text-xs text-muted-foreground text-center">
+                  Click a section to see AI insights
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-foreground">Design Decisions</p>
+              {[
+                { title: "Color Palette", desc: "Chosen to match brand personality and improve readability" },
+                { title: "Typography", desc: "Google Fonts selected for visual hierarchy and load speed" },
+                { title: "Layout", desc: "Mobile-first responsive grid with optimal content flow" },
+                { title: "Images", desc: "Contextual imagery matched to business category" },
+              ].map((item) => (
+                <div key={item.title} className="flex gap-2">
+                  <div className="w-1 rounded-full bg-primary/30 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{item.title}</p>
+                    <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <ImageSwapPanel html={currentHtml} onHtmlChange={handleHtmlChange} />
+        )}
       </div>
     </div>
   );

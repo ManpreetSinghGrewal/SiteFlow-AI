@@ -135,6 +135,7 @@ const Index = () => {
           onRegenerate={handleRegenerate}
           brandName={brandData.businessName}
           brandType={brandData.businessType}
+          onHtmlChange={(newHtml) => setGeneratedHtml(newHtml)}
         />
       )}
     </div>

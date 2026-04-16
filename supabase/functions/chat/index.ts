@@ -32,15 +32,25 @@ IMPORTANT OUTPUT FORMAT:
 - Add a brief summary BEFORE the code block explaining the website you built (2-3 sentences max).
 - Add SEO meta tags, favicon placeholder, and proper semantic HTML.
 
-IMAGE GUIDELINES (CRITICAL):
-- The app automatically curates website imagery after generation, so focus on placing the RIGHT image slots in the RIGHT sections.
-- Include 5-8 images across the page (hero, about, services, gallery, testimonials, CTA).
-- ALWAYS add descriptive alt text that matches the business and section.
-- If you include image URLs, they MUST be full absolute https:// URLs.
-- NEVER use picsum.photos, source.unsplash.com, placeholder.com, via.placeholder.com, or broken/demo image hosts.
-- You may use semantic placeholder names in src/background-image values such as hero-image, about-image, service-image-1, gallery-image-2, team-image, testimonial-image.
-- Make sure image placements are contextually correct: spa for spa sites, coffee for cafés, fitness for gyms, etc.
+IMAGE GUIDELINES (CRITICAL — FOLLOW EXACTLY):
+- The app AUTOMATICALLY replaces image URLs after generation. You MUST use semantic placeholder names as src values.
+- NEVER use real URLs like https://images.unsplash.com/..., picsum.photos, source.unsplash.com, placeholder.com, via.placeholder.com, or ANY real image host.
+- Instead, use ONLY these semantic placeholder names as the src attribute value:
+  - hero-image (for the hero/banner section)
+  - about-image (for about section)
+  - service-image-1, service-image-2, service-image-3 (for services cards)
+  - gallery-image-1, gallery-image-2 (for gallery)
+  - team-image-1, team-image-2 (for team members)
+  - testimonial-image-1, testimonial-image-2 (for testimonial avatars)
+  - cta-image (for CTA section background)
+  - feature-image-1, feature-image-2 (for features section)
+- Example: <img src="hero-image" alt="Relaxing spa environment with candles and stones" />
+- Example CSS: background-image: url('hero-image');
+- Include 5-8 images across the page in different sections.
+- ALWAYS add HIGHLY DESCRIPTIVE alt text that matches the SPECIFIC business type. For a spa: "Relaxing massage therapy room with warm lighting". For a café: "Fresh brewed coffee with latte art on wooden table".
+- The alt text is used by our image system to find the right photos, so make it detailed and specific to the business.
 - Use object-fit: cover, strong aspect ratios, and loading="lazy" below the fold.
+- For background images in CSS, use the same semantic names: background-image: url('hero-image');
 
 STYLE GUIDELINES:
 - Make it visually stunning and professional — not generic or template-looking.
