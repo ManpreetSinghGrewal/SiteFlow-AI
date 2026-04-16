@@ -59,7 +59,7 @@ const Index = () => {
       onDone: () => {
         setStreamProgress(100);
         setIsLoading(false);
-        const html = extractHtmlFromMessage(contentRef.current);
+        const html = extractHtmlFromMessage(contentRef.current, data.businessType);
         if (html) {
           setGeneratedHtml(html);
         }
