@@ -251,7 +251,7 @@ const HumanReview = ({ html, onBack, onRegenerate, brandName, brandType, onHtmlC
             </div>
           </div>
         ) : (
-          <ImageSwapPanel html={currentHtml} onHtmlChange={handleHtmlChange} />
+          <ImageSwapPanel html={currentHtml} onHtmlChange={handleHtmlChange} businessType={brandType} />
         )}
       </div>
     </div>
