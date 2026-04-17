@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Github, Linkedin, Mail, Twitter, Users } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
 
 interface TeamMember {
   name: string;
@@ -47,31 +48,17 @@ const About = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center">
       {/* Navigation */}
-      <nav className="flex items-center justify-between px-6 md:px-10 py-6 max-w-7xl w-full mx-auto bg-white/50 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/")}>
-          <img src="/siteflow-logo.png" alt="SiteFlow AI" className="w-9 h-9 rounded-xl object-cover" />
-          <span className="font-bold text-xl text-slate-900 tracking-tight">SiteFlow AI</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <button
-            onClick={() => navigate("/builder")}
-            className="flex items-center gap-1.5 px-6 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-full hover:bg-slate-800 transition-all active:scale-[0.98]"
-          >
-            Launch Builder
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="w-full max-w-7xl px-6 py-20">
         {/* Hero Section */}
         <section className="text-center mb-24">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-6">
             <Users className="w-4 h-4" />
             Our Team
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-8 tracking-tight">
-            The minds behind <span className="text-blue-600">SiteFlow AI</span>
+            The minds behind <span className="text-primary">SiteFlow AI</span>
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
             We're a team of passionate engineers, designers, and strategists on a mission to 
@@ -88,12 +75,12 @@ const About = () => {
             >
               <div className="flex flex-col items-center text-center">
                 <div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 overflow-hidden relative">
-                   <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20" />
-                   <span className="absolute font-bold text-2xl text-blue-600/60">{member.name[0]}</span>
+                   <div className="w-full h-full bg-gradient-to-br from-primary/20 to-cyan-500/20" />
+                   <span className="absolute font-bold text-2xl text-primary/60">{member.name[0]}</span>
                 </div>
                 
                 <h3 className="text-xl font-bold text-slate-900 mb-2">{member.name}</h3>
-                <p className="text-sm font-semibold text-blue-600 mb-4">{member.role}</p>
+                <p className="text-sm font-semibold text-primary mb-4">{member.role}</p>
                 <p className="text-slate-500 text-sm leading-relaxed mb-8">
                   {member.bio}
                 </p>
@@ -109,8 +96,8 @@ const About = () => {
         </section>
 
         {/* Final CTA */}
-        <section className="bg-slate-900 rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent pointer-events-none" />
+        <section className="bg-primary rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
           <h2 className="text-3xl md:text-5xl font-bold mb-8 relative z-10">
             Join the future of web building
           </h2>

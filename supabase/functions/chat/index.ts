@@ -86,23 +86,23 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-flash-latest",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           ...messages,
         ],
         stream: true,
-        max_tokens: 16000,
+        max_tokens: 65000,
       }),
     });
 
@@ -121,7 +121,24 @@ serve(async (req) => {
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
+      
+      let errorMessage = "AI service error";
+      try {
+        const parsed = JSON.parse(t);
+        if (parsed.error?.message) {
+          errorMessage = parsed.error.message;
+        } else if (Array.isArray(parsed) && parsed[0]?.error?.message) {
+          errorMessage = parsed[0].error.message;
+        } else if (response.status === 503) {
+          errorMessage = "AI service is currently experiencing high demand. Please try again later.";
+        }
+      } catch (err) {
+        if (response.status === 503) {
+          errorMessage = "AI service is currently experiencing high demand. Please try again later.";
+        }
+      }
+
+      return new Response(JSON.stringify({ error: errorMessage }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

@@ -20,6 +20,19 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        salesforce: {
+          blue: "#0176D3",
+          darkBlue: "#005FB2",
+          gray: {
+            1: "#F3F3F2",
+            2: "#E9E9E9",
+            3: "#DDDBDA",
+            4: "#B0ADAB",
+            5: "#747474",
+          },
+          success: "#4BCA81",
+          error: "#BA0517",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

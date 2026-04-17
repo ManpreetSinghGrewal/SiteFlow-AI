@@ -1,44 +1,35 @@
 import { useNavigate } from "react-router-dom";
 import { Globe, ChevronRight, CheckCircle2, Sparkles, Star, MapPin, Clock, TrendingUp, Users } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { useAuth } from "@/context/AuthContext";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 via-white to-white flex flex-col items-center">
       {/* Navigation */}
-      <nav className="flex items-center justify-between px-6 md:px-10 py-4 max-w-7xl w-full mx-auto">
-        <div className="flex items-center gap-2.5">
-          <img src="/siteflow-logo.png" alt="SiteFlow AI" className="w-9 h-9 rounded-xl object-cover" />
-          <span className="font-bold text-lg text-gray-900 tracking-tight">SiteFlow AI</span>
-        </div>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-          <a href="/about" className="hover:text-gray-900 transition-colors">About Us</a>
-          <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>
-          <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/builder")}
-            className="hidden sm:inline-flex items-center gap-1.5 px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-full hover:bg-gray-800 transition-all hover:shadow-lg hover:shadow-gray-900/20 active:scale-[0.98]"
-          >
-            Get started
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <header className="w-full flex flex-col items-center justify-center px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+        {user && (
+          <div className="mb-6 flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 animate-fade-in">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-sm font-medium text-primary">Welcome back, {user.email?.split('@')[0]}</span>
+          </div>
+        )}
+        
         {/* Icon Badge */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center mb-8 shadow-lg shadow-blue-500/30 animate-[pulse_3s_ease-in-out_infinite]">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-primary flex items-center justify-center mb-8 shadow-lg shadow-primary/30 animate-[pulse_3s_ease-in-out_infinite]">
           <Globe className="w-7 h-7 text-white" />
         </div>
 
         {/* Headline */}
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 text-center leading-[1.1] tracking-tight max-w-4xl">
           Build a website that{" "}
-          <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary to-cyan-500 bg-clip-text text-transparent">
             understands
           </span>{" "}
           your business
@@ -55,7 +46,7 @@ const Landing = () => {
           onClick={() => navigate("/builder")}
           className="mt-10 group flex items-center gap-3 px-8 py-4 bg-white border border-gray-200 rounded-full text-base font-semibold text-gray-900 shadow-sm hover:shadow-xl hover:border-gray-300 hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
         >
-          <Sparkles className="w-5 h-5 text-blue-500 group-hover:rotate-12 transition-transform duration-300" />
+          <Sparkles className="w-5 h-5 text-primary group-hover:rotate-12 transition-transform duration-300" />
           Generate My Website
           <ChevronRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform duration-300" />
         </button>
@@ -64,11 +55,11 @@ const Landing = () => {
         <div className="mt-6 flex items-center gap-6 text-sm text-gray-400">
           <span className="flex items-center gap-1.5 font-medium">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            No credit card required
+            Free to get started
           </span>
           <span className="flex items-center gap-1.5 font-medium">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            Ready in 2 minutes
+            Built in 60 seconds
           </span>
         </div>
       </header>
@@ -113,7 +104,7 @@ const Landing = () => {
       <section id="pricing" className="w-full max-w-5xl px-6 mb-32">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
           {[
-            { value: "10,000+", label: "Websites created", icon: Globe, color: "text-blue-500", bg: "bg-blue-50" },
+            { value: "10,000+", label: "Websites created", icon: Globe, color: "text-primary", bg: "bg-blue-50" },
             { value: "4.9/5", label: "Average rating", icon: Star, color: "text-amber-500", bg: "bg-amber-50" },
             { value: "2 min", label: "Average build time", icon: Clock, color: "text-cyan-500", bg: "bg-cyan-50" }
           ].map((stat) => (
@@ -145,7 +136,7 @@ const Landing = () => {
               title: "AI That Gets You",
               desc: "Tell us about your business in plain English. Our AI understands context, not just keywords.",
               icon: Sparkles,
-              color: "bg-blue-500"
+              color: "bg-primary"
             },
             {
               title: "Built to Convert",
@@ -157,7 +148,7 @@ const Landing = () => {
               title: "Your Customers First",
               desc: "Clean design that builds trust and makes it easy for customers to take action.",
               icon: Users,
-              color: "bg-blue-600"
+              color: "bg-primary"
             }
           ].map((feature) => (
             <div key={feature.title} className="p-10 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 group">
@@ -176,7 +167,7 @@ const Landing = () => {
         <div className="text-center pb-32">
            <button
             onClick={() => navigate("/builder")}
-            className="group flex items-center gap-3 px-10 py-5 bg-gray-900 text-white rounded-full text-lg font-bold shadow-2xl shadow-gray-900/40 hover:scale-105 active:scale-95 transition-all mx-auto"
+            className="group flex items-center gap-3 px-10 py-5 bg-primary text-white rounded-full text-lg font-bold shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all mx-auto"
           >
             Start Building Free
             <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
