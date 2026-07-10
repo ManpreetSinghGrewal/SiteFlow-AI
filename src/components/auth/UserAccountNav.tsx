@@ -25,7 +25,7 @@ export function UserAccountNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border border-border">
-            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email ?? ""} />
+            <AvatarImage src="" alt={user.email ?? ""} />
             <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
               {initials}
             </AvatarFallback>
