@@ -1,6 +1,8 @@
+import { getToken } from "@/lib/api";
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const CHAT_URL = "/api/chat";
 
 export async function streamChat({
   messages,
@@ -15,11 +17,17 @@ export async function streamChat({
   onError: (error: string) => void;
   signal?: AbortSignal;
 }) {
+  const token = getToken();
+  if (!token) {
+    onError("Please sign in to use AI generation.");
+    return;
+  }
+
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ messages }),
     signal,

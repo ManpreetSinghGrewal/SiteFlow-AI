@@ -1,11 +1,22 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Globe, ChevronRight, CheckCircle2, Sparkles, Star, MapPin, Clock, TrendingUp, Users } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
+import { AuthDialog } from "@/components/auth/AuthDialog";
+import { toast } from "sonner";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+
+  useEffect(() => {
+    const from = (location.state as { from?: string })?.from;
+    if (from && !user) {
+      toast.info("Please sign in to access that page");
+    }
+  }, [location.state, user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 via-white to-white flex flex-col items-center">
@@ -42,14 +53,24 @@ const Landing = () => {
         </p>
 
         {/* CTA Button */}
-        <button
-          onClick={() => navigate("/builder")}
-          className="mt-10 group flex items-center gap-3 px-8 py-4 bg-white border border-gray-200 rounded-full text-base font-semibold text-gray-900 shadow-sm hover:shadow-xl hover:border-gray-300 hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
-        >
-          <Sparkles className="w-5 h-5 text-primary group-hover:rotate-12 transition-transform duration-300" />
-          Generate My Website
-          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform duration-300" />
-        </button>
+        {user ? (
+          <button
+            onClick={() => navigate("/builder")}
+            className="mt-10 group flex items-center gap-3 px-8 py-4 bg-white border border-gray-200 rounded-full text-base font-semibold text-gray-900 shadow-sm hover:shadow-xl hover:border-gray-300 hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
+          >
+            <Sparkles className="w-5 h-5 text-primary group-hover:rotate-12 transition-transform duration-300" />
+            Generate My Website
+            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+          </button>
+        ) : (
+          <AuthDialog>
+            <button className="mt-10 group flex items-center gap-3 px-8 py-4 bg-white border border-gray-200 rounded-full text-base font-semibold text-gray-900 shadow-sm hover:shadow-xl hover:border-gray-300 hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]">
+              <Sparkles className="w-5 h-5 text-primary group-hover:rotate-12 transition-transform duration-300" />
+              Get Started — Sign Up Free
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </AuthDialog>
+        )}
 
         {/* Trust Badges */}
         <div className="mt-6 flex items-center gap-6 text-sm text-gray-400">
