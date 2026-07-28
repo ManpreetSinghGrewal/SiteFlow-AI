@@ -13,7 +13,7 @@ import Profile from "./pages/Profile.tsx";
 import Settings from "./pages/Settings.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
-import { ParticleCursor } from "./components/ParticleCursor";
+import { GlowingCursor } from "./components/GlowingCursor";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +22,7 @@ const App = () => (
     <AuthProvider>
       <TooltipProvider>
         <div className="global-grain-overlay" />
-        <ParticleCursor />
+        <GlowingCursor />
         <Toaster />
         <Sonner />
         <BrowserRouter>
