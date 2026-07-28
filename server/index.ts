@@ -1,11 +1,16 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { closeMongo, connectMongo, pingMongo } from "./mongodb.js";
 import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profiles.js";
 import projectRoutes from "./routes/projects.js";
 import chatRoutes from "./routes/chat.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const isProduction = process.env.NODE_ENV === "production";
 
 const app = express();
 const port = Number(process.env.PORT) || 3001;
@@ -31,6 +36,20 @@ app.use("/api/profiles", profileRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/chat", chatRoutes);
 
+if (isProduction) {
+  const distPath = path.resolve(__dirname, "../dist");
+  app.use(express.static(distPath));
+
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, "index.html"), (err) => {
+      if (err) next(err);
+    });
+  });
+}
+
 async function ensureIndexes() {
   const db = await connectMongo();
   await db.collection("users").createIndex({ email: 1 }, { unique: true });
@@ -39,12 +58,13 @@ async function ensureIndexes() {
 }
 
 const server = app.listen(port, async () => {
+  console.log(`API server running on port ${port}${isProduction ? " (production)" : ""}`);
   try {
     await ensureIndexes();
-    console.log(`API server running on http://localhost:${port}`);
+    console.log("MongoDB database connected & indexes initialized successfully.");
   } catch (error) {
-    console.error("Failed to initialize database:", error);
-    process.exit(1);
+    console.warn("MongoDB connection notice:", error instanceof Error ? error.message : error);
+    console.warn("If using MongoDB Atlas, please check that your IP address is whitelisted under Network Access (0.0.0.0/0).");
   }
 });
 

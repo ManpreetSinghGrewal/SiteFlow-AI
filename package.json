@@ -8,6 +8,7 @@
     "server": "tsx watch server/index.ts",
     "dev:all": "npm run server & npm run dev",
     "build": "vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -69,6 +70,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.19.2",
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
   },
@@ -95,7 +97,6 @@
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "tsx": "^4.19.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",

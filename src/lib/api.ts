@@ -1,3 +1,5 @@
+import { apiUrl } from "@/lib/config";
+
 const TOKEN_KEY = "siteflow_token";
 
 function getToken(): string | null {
@@ -37,7 +39,7 @@ export async function apiFetch<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(apiUrl(path), { ...options, headers });
 
   if (response.status === 204) {
     return undefined as T;

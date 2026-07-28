@@ -92,7 +92,7 @@ router.post("/", requireAuth, async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-flash-latest",
+        model: "gemini-2.5-flash",
         messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
         stream: true,
         max_tokens: 65000,
@@ -108,12 +108,15 @@ router.post("/", requireAuth, async (req, res) => {
       }
 
       const text = await response.text();
+      console.error(`Gemini API error (${response.status}):`, text);
       let errorMessage = "AI service error";
 
       try {
         const parsed = JSON.parse(text);
         if (parsed.error?.message) {
           errorMessage = parsed.error.message;
+        } else if (Array.isArray(parsed) && parsed[0]?.error?.message) {
+          errorMessage = parsed[0].error.message;
         } else if (response.status === 503) {
           errorMessage = "AI service is currently experiencing high demand. Please try again later.";
         }

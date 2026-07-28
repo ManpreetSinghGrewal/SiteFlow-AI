@@ -1,8 +1,7 @@
 import { getToken } from "@/lib/api";
+import { apiUrl } from "@/lib/config";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
-
-const CHAT_URL = "/api/chat";
 
 export async function streamChat({
   messages,
@@ -23,7 +22,7 @@ export async function streamChat({
     return;
   }
 
-  const resp = await fetch(CHAT_URL, {
+  const resp = await fetch(apiUrl("/api/chat"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
