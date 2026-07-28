@@ -13,12 +13,16 @@ import Profile from "./pages/Profile.tsx";
 import Settings from "./pages/Settings.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
+import { ParticleCursor } from "./components/ParticleCursor";
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
+        <div className="global-grain-overlay" />
+        <ParticleCursor />
         <Toaster />
         <Sonner />
         <BrowserRouter>
