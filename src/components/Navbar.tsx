@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronRight, Globe } from "lucide-react";
+import { ChevronRight, Github } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AuthDialog } from "./auth/AuthDialog";
 import { UserAccountNav } from "./auth/UserAccountNav";
@@ -12,7 +12,11 @@ export function Navbar() {
 
   const isHome = location.pathname === "/";
   const isAbout = location.pathname === "/about";
+  const isProfile = location.pathname === "/profile";
+  const isProjects = location.pathname === "/projects";
   const isBuilder = location.pathname === "/builder";
+
+  const GITHUB_REPO_URL = "https://github.com/ManpreetSinghGrewal/SiteFlow-AI";
 
   return (
     <nav className="flex items-center justify-between px-6 md:px-10 py-4 max-w-7xl w-full mx-auto bg-transparent z-50">
@@ -41,6 +45,24 @@ export function Navbar() {
         >
           About Us
         </a>
+        {user && (
+          <>
+            <a 
+              href="/projects" 
+              className={`transition-colors hover:text-gray-900 ${isProjects ? "text-gray-900 font-semibold active-gradient-link" : "text-gray-500"}`}
+              onClick={(e) => { e.preventDefault(); navigate("/projects"); }}
+            >
+              Projects
+            </a>
+            <a 
+              href="/profile" 
+              className={`transition-colors hover:text-gray-900 ${isProfile ? "text-gray-900 font-semibold active-gradient-link" : "text-gray-500"}`}
+              onClick={(e) => { e.preventDefault(); navigate("/profile"); }}
+            >
+              Profile
+            </a>
+          </>
+        )}
         <a 
           href="/#how-it-works" 
           className="transition-colors hover:text-gray-900 text-gray-500"
@@ -50,6 +72,17 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* GitHub Repository Link Icon */}
+        <a
+          href={GITHUB_REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2 rounded-full text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+          title="View GitHub Repository"
+        >
+          <Github className="w-5 h-5" />
+        </a>
+
         {!isLoading && (
           <>
             {user ? (
