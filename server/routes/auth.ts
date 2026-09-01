@@ -1,9 +1,11 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { ObjectId } from "mongodb";
 import { connectMongo } from "../mongodb.js";
 import { requireAuth, signToken } from "../middleware/auth.js";
 import { toIso } from "../serialize.js";
+import { sendBrevoEmail, getWelcomeEmailHtml, getResetPasswordEmailHtml } from "../brevo.js";
 import type { AuthRequest } from "../middleware/auth.js";
 import type { ProfileDoc, UserDoc } from "../types.js";
 
@@ -36,6 +38,7 @@ router.post("/signup", async (req, res) => {
   const now = new Date();
   const userId = new ObjectId();
   const passwordHash = await bcrypt.hash(password, 12);
+  const name = displayName?.trim() || normalizedEmail.split("@")[0];
 
   await users.insertOne({
     _id: userId,
@@ -49,13 +52,20 @@ router.post("/signup", async (req, res) => {
   await profiles.insertOne({
     _id: userId,
     userId,
-    display_name: displayName?.trim() || normalizedEmail.split("@")[0],
+    display_name: name,
     business_name: null,
     created_at: now,
     updated_at: now,
   });
 
   const token = signToken(userId);
+
+  // Send Brevo Welcome Email asynchronously
+  sendBrevoEmail({
+    to: [{ email: normalizedEmail, name }],
+    subject: "Welcome to SiteFlow AI! 🚀",
+    htmlContent: getWelcomeEmailHtml(name),
+  }).catch((err) => console.error("Welcome email error:", err));
 
   res.status(201).json({
     token,
@@ -106,10 +116,83 @@ router.get("/me", requireAuth, async (req: AuthRequest, res) => {
   });
 });
 
-router.post("/forgot-password", (_req, res) => {
-  res.status(501).json({
-    error: "Password reset requires email configuration. Contact your administrator.",
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body as { email?: string };
+
+  if (!email) {
+    return res.status(400).json({ error: "Email address is required" });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const db = await connectMongo();
+  const user = await db.collection<UserDoc>("users").findOne({ email: normalizedEmail });
+
+  if (!user) {
+    // For security, respond success even if email not found
+    return res.json({ message: "If an account with that email exists, a password reset link has been sent." });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 3600000); // 1 hour expiration
+
+  await db.collection("password_resets").updateOne(
+    { userId: user._id },
+    {
+      $set: {
+        userId: user._id,
+        email: normalizedEmail,
+        token: resetToken,
+        expiresAt,
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true }
+  );
+
+  const resetUrl = `https://site-flow-ai-eight.vercel.app/reset-password?token=${resetToken}`;
+
+  const sent = await sendBrevoEmail({
+    to: [{ email: normalizedEmail }],
+    subject: "Reset your SiteFlow AI password 🔑",
+    htmlContent: getResetPasswordEmailHtml(resetUrl),
   });
+
+  if (!sent && !process.env.BREVO_API_KEY) {
+    return res.status(400).json({
+      error: "BREVO_API_KEY is not configured on the server. Please contact support or check server environment.",
+    });
+  }
+
+  res.json({ message: "If an account with that email exists, a password reset link has been sent." });
+});
+
+router.post("/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body as { token?: string; newPassword?: string };
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: "Reset token and new password are required" });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters" });
+  }
+
+  const db = await connectMongo();
+  const resetRecord = await db.collection("password_resets").findOne({ token });
+
+  if (!resetRecord || new Date(resetRecord.expiresAt) < new Date()) {
+    return res.status(400).json({ error: "Invalid or expired password reset token" });
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await db.collection<UserDoc>("users").updateOne(
+    { _id: resetRecord.userId },
+    { $set: { passwordHash, updatedAt: new Date() } }
+  );
+
+  await db.collection("password_resets").deleteOne({ token });
+
+  res.json({ message: "Password updated successfully! You can now log in with your new password." });
 });
 
 export default router;

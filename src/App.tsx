@@ -11,6 +11,7 @@ import About from "./pages/About.tsx";
 import Projects from "./pages/Projects.tsx";
 import Profile from "./pages/Profile.tsx";
 import Settings from "./pages/Settings.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 import { GlowingCursor } from "./components/GlowingCursor";
@@ -29,6 +30,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/about" element={<About />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/builder"
               element={
