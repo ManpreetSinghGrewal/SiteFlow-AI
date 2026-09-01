@@ -12,33 +12,38 @@ export interface BrevoResult {
 
 export async function sendBrevoEmail(options: SendEmailOptions): Promise<BrevoResult> {
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    const errorMsg = "BREVO_API_KEY is not configured in Vercel environment variables.";
-    console.warn(errorMsg);
-    return { success: false, error: errorMsg };
-  }
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const targetEmail = options.to[0]?.email || "";
 
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || "noreply@siteflowai.com";
-  const senderName = process.env.BREVO_SENDER_NAME || "SiteFlow AI";
+  console.log(`[SITEFLOW OTP EMAIL DISPATCH] Target: ${targetEmail} | Subject: "${options.subject}"`);
 
-  try {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "accept": "application/json",
-        "api-key": apiKey,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        sender: { name: senderName, email: senderEmail },
-        to: options.to,
-        subject: options.subject,
-        htmlContent: options.htmlContent,
-        textContent: options.textContent,
-      }),
-    });
+  // 1. Try Brevo HTTPS REST API
+  if (apiKey) {
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || "noreply@siteflowai.com";
+    const senderName = process.env.BREVO_SENDER_NAME || "SiteFlow AI";
 
-    if (!res.ok) {
+    try {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "api-key": apiKey,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: options.to,
+          subject: options.subject,
+          htmlContent: options.htmlContent,
+          textContent: options.textContent,
+        }),
+      });
+
+      if (res.ok) {
+        console.log(`[BREVO SUCCESS] Email successfully delivered to ${targetEmail}`);
+        return { success: true };
+      }
+
       const errorText = await res.text();
       let detail = `Brevo API error (${res.status})`;
       try {
@@ -47,17 +52,48 @@ export async function sendBrevoEmail(options: SendEmailOptions): Promise<BrevoRe
       } catch {
         detail = `Brevo error: ${errorText}`;
       }
-      console.error(detail);
-      return { success: false, error: detail };
+      console.warn(`[BREVO FAIL] ${detail}`);
+    } catch (err) {
+      console.error("[BREVO EXCEPTION]", err);
     }
+  }
 
-    console.log(`Email successfully dispatched via Brevo to ${options.to[0]?.email}`);
-    return { success: true };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : "Network error contacting Brevo API";
-    console.error("Error sending email via Brevo:", errorMsg);
+  // 2. Try Resend HTTPS REST API Fallback if configured
+  if (resendApiKey) {
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_SENDER_EMAIL || "SiteFlow AI <onboarding@resend.dev>",
+          to: [targetEmail],
+          subject: options.subject,
+          html: options.htmlContent,
+        }),
+      });
+
+      if (res.ok) {
+        console.log(`[RESEND SUCCESS] Email successfully delivered to ${targetEmail}`);
+        return { success: true };
+      }
+    } catch (err) {
+      console.error("[RESEND EXCEPTION]", err);
+    }
+  }
+
+  if (!apiKey && !resendApiKey) {
+    const errorMsg = "Neither BREVO_API_KEY nor RESEND_API_KEY is configured in Vercel Environment Variables.";
+    console.warn(errorMsg);
     return { success: false, error: errorMsg };
   }
+
+  return {
+    success: false,
+    error: "Email delivery failed via Brevo/Resend. Please check BREVO_SENDER_EMAIL in Vercel environment settings or verify your Brevo sender email.",
+  };
 }
 
 export function getWelcomeEmailHtml(displayName: string): string {

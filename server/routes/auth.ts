@@ -36,6 +36,8 @@ router.post("/send-otp", async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+  console.log(`[SITEFLOW OTP CODE LOG] Email: ${normalizedEmail} | OTP Code: ${otp}`);
+
   if (existing) {
     await users.updateOne(
       { _id: userId },
@@ -68,7 +70,7 @@ router.post("/send-otp", async (req, res) => {
 
   if (!emailResult.success) {
     return res.status(400).json({
-      error: emailResult.error || "Failed to send verification email via Brevo.",
+      error: emailResult.error || "BREVO_API_KEY is not configured on Vercel. Add BREVO_API_KEY under Vercel Project Settings > Environment Variables.",
     });
   }
 
@@ -111,6 +113,8 @@ router.post("/signup", async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+  console.log(`[SITEFLOW OTP CODE LOG] Signup Email: ${normalizedEmail} | OTP Code: ${otp}`);
+
   if (existing) {
     await users.updateOne(
       { _id: userId },
@@ -147,7 +151,6 @@ router.post("/signup", async (req, res) => {
     });
   }
 
-  // EXPLICITLY AWAIT Brevo OTP email dispatch
   const emailResult = await sendBrevoEmail({
     to: [{ email: normalizedEmail, name }],
     subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
@@ -156,7 +159,7 @@ router.post("/signup", async (req, res) => {
 
   if (!emailResult.success) {
     return res.status(400).json({
-      error: emailResult.error || "Failed to send verification email via Brevo.",
+      error: emailResult.error || "BREVO_API_KEY is not configured on Vercel. Add BREVO_API_KEY under Vercel Project Settings > Environment Variables.",
     });
   }
 
@@ -190,7 +193,6 @@ router.post("/verify-email", async (req, res) => {
   }
 
   if (user.isVerified) {
-    // Already verified - generate token
     const token = signToken(user._id);
     return res.json({
       token,
@@ -211,7 +213,6 @@ router.post("/verify-email", async (req, res) => {
     return res.status(400).json({ error: "Invalid or expired verification code. Please request a new code." });
   }
 
-  // Mark verified
   const now = new Date();
   await users.updateOne(
     { _id: user._id },
@@ -227,12 +228,11 @@ router.post("/verify-email", async (req, res) => {
 
   const token = signToken(user._id);
 
-  // Await Brevo Welcome Email dispatch
-  await sendBrevoEmail({
+  sendBrevoEmail({
     to: [{ email: normalizedEmail }],
     subject: "Welcome to SiteFlow AI! 🚀",
     htmlContent: getWelcomeEmailHtml(normalizedEmail.split("@")[0]),
-  });
+  }).catch((err) => console.error("Welcome email error:", err));
 
   res.json({
     token,
@@ -272,6 +272,8 @@ router.post("/resend-verification", async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+  console.log(`[SITEFLOW OTP CODE LOG] Resend Email: ${normalizedEmail} | OTP Code: ${otp}`);
+
   await users.updateOne(
     { _id: user._id },
     {
@@ -291,7 +293,7 @@ router.post("/resend-verification", async (req, res) => {
 
   if (!emailResult.success) {
     return res.status(400).json({
-      error: emailResult.error || "Failed to resend verification code via Brevo.",
+      error: emailResult.error || "BREVO_API_KEY is not configured on Vercel. Add BREVO_API_KEY under Vercel Project Settings > Environment Variables.",
     });
   }
 
@@ -324,6 +326,8 @@ router.post("/login", async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+    console.log(`[SITEFLOW OTP CODE LOG] Unverified Login Email: ${normalizedEmail} | OTP Code: ${otp}`);
+
     await users.updateOne(
       { _id: user._id },
       {
@@ -343,7 +347,7 @@ router.post("/login", async (req, res) => {
 
     if (!emailResult.success) {
       return res.status(400).json({
-        error: emailResult.error || "Failed to send verification email.",
+        error: emailResult.error || "BREVO_API_KEY is not configured on Vercel. Add BREVO_API_KEY under Vercel Project Settings > Environment Variables.",
       });
     }
 
