@@ -53,9 +53,14 @@ router.post("/send-otp", async (req, res) => {
     htmlContent: getOtpEmailHtml(otp),
   });
 
-  if (!sent && !process.env.BREVO_API_KEY) {
+  if (!sent) {
+    if (!process.env.BREVO_API_KEY) {
+      return res.status(400).json({
+        error: "BREVO_API_KEY is not configured on Vercel. Please add BREVO_API_KEY in Vercel Project Settings > Environment Variables.",
+      });
+    }
     return res.status(400).json({
-      error: "BREVO_API_KEY is not configured on the server. Please check server environment settings.",
+      error: "Brevo could not dispatch email. Please ensure your sender email is verified in Brevo (Senders & IP) or check spam folder.",
     });
   }
 
