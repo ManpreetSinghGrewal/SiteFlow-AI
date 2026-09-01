@@ -175,7 +175,7 @@ router.post("/signup", async (req, res) => {
  * Validates 6-digit OTP, marks account isVerified = true, sends Welcome email & returns JWT token
  */
 router.post("/verify-email", async (req, res) => {
-  const { email, otp } = req.body as { email?: string; otp?: string };
+  const { email, otp, password } = req.body as { email?: string; otp?: string; password?: string };
 
   if (!email || !otp) {
     return res.status(400).json({ error: "Email address and 6-digit OTP code are required" });
@@ -192,39 +192,29 @@ router.post("/verify-email", async (req, res) => {
     return res.status(404).json({ error: "User account not found. Please sign up." });
   }
 
-  if (user.isVerified) {
-    const token = signToken(user._id);
-    return res.json({
-      token,
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        created_at: toIso(user.createdAt),
-      },
-    });
-  }
-
   if (
-    !user.verificationCode ||
-    user.verificationCode !== cleanOtp ||
-    !user.verificationExpiresAt ||
-    new Date(user.verificationExpiresAt) < new Date()
+    !user.isVerified &&
+    (!user.verificationCode ||
+      user.verificationCode !== cleanOtp ||
+      !user.verificationExpiresAt ||
+      new Date(user.verificationExpiresAt) < new Date())
   ) {
     return res.status(400).json({ error: "Invalid or expired verification code. Please request a new code." });
   }
 
   const now = new Date();
-  await users.updateOne(
-    { _id: user._id },
-    {
-      $set: {
-        isVerified: true,
-        verificationCode: null,
-        verificationExpiresAt: null,
-        updatedAt: now,
-      },
-    }
-  );
+  const updateFields: Record<string, any> = {
+    isVerified: true,
+    verificationCode: null,
+    verificationExpiresAt: null,
+    updatedAt: now,
+  };
+
+  if (password && password.length >= 6) {
+    updateFields.passwordHash = await bcrypt.hash(password, 12);
+  }
+
+  await users.updateOne({ _id: user._id }, { $set: updateFields });
 
   const token = signToken(user._id);
 
