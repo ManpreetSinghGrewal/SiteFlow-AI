@@ -13,7 +13,7 @@ const router = Router();
 
 /**
  * SIGNUP CONTROLLER
- * Registers new user with isVerified = false and dispatches Brevo 6-digit OTP code
+ * Registers new user with isVerified = false and awaits Brevo 6-digit OTP email dispatch
  */
 router.post("/signup", async (req, res) => {
   const { email, password, displayName } = req.body as {
@@ -83,12 +83,18 @@ router.post("/signup", async (req, res) => {
     });
   }
 
-  // Dispatch Brevo OTP email via HTTPS REST API
-  sendBrevoEmail({
+  // EXPLICITLY AWAIT Brevo OTP email dispatch to ensure Vercel Serverless Function doesn't kill execution
+  const emailResult = await sendBrevoEmail({
     to: [{ email: normalizedEmail, name }],
     subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
     htmlContent: getOtpEmailHtml(otp),
-  }).catch((err) => console.error("Brevo OTP dispatch error:", err));
+  });
+
+  if (!emailResult.success) {
+    return res.status(400).json({
+      error: emailResult.error || "Failed to send verification email via Brevo.",
+    });
+  }
 
   res.status(201).json({
     ok: true,
@@ -157,12 +163,12 @@ router.post("/verify-email", async (req, res) => {
 
   const token = signToken(user._id);
 
-  // Send Brevo Welcome Email
-  sendBrevoEmail({
+  // Await Brevo Welcome Email dispatch
+  await sendBrevoEmail({
     to: [{ email: normalizedEmail }],
     subject: "Welcome to SiteFlow AI! 🚀",
     htmlContent: getWelcomeEmailHtml(normalizedEmail.split("@")[0]),
-  }).catch((err) => console.error("Welcome email error:", err));
+  });
 
   res.json({
     token,
@@ -176,7 +182,7 @@ router.post("/verify-email", async (req, res) => {
 
 /**
  * RESEND VERIFICATION CONTROLLER
- * Generates a fresh OTP and dispatches Brevo email for unverified accounts
+ * Awaits fresh 6-digit OTP dispatch via Brevo HTTPS REST API
  */
 router.post("/resend-verification", async (req, res) => {
   const { email } = req.body as { email?: string };
@@ -213,11 +219,17 @@ router.post("/resend-verification", async (req, res) => {
     }
   );
 
-  sendBrevoEmail({
+  const emailResult = await sendBrevoEmail({
     to: [{ email: normalizedEmail }],
     subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
     htmlContent: getOtpEmailHtml(otp),
-  }).catch((err) => console.error("Brevo resend OTP error:", err));
+  });
+
+  if (!emailResult.success) {
+    return res.status(400).json({
+      error: emailResult.error || "Failed to resend verification code via Brevo.",
+    });
+  }
 
   res.json({ message: "A new 6-digit verification code has been sent to your email!" });
 });
@@ -259,11 +271,17 @@ router.post("/login", async (req, res) => {
       }
     );
 
-    sendBrevoEmail({
+    const emailResult = await sendBrevoEmail({
       to: [{ email: normalizedEmail }],
       subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
       htmlContent: getOtpEmailHtml(otp),
-    }).catch((err) => console.error("Brevo login OTP error:", err));
+    });
+
+    if (!emailResult.success) {
+      return res.status(400).json({
+        error: emailResult.error || "Failed to send verification email.",
+      });
+    }
 
     return res.status(403).json({
       error: "Please verify your email address first. A new 6-digit verification code has been sent to your email.",
@@ -329,15 +347,15 @@ router.post("/forgot-password", async (req, res) => {
 
   const resetUrl = `https://site-flow-ai-eight.vercel.app/reset-password?token=${resetToken}`;
 
-  const sent = await sendBrevoEmail({
+  const emailResult = await sendBrevoEmail({
     to: [{ email: normalizedEmail }],
     subject: "Reset your SiteFlow AI password 🔑",
     htmlContent: getResetPasswordEmailHtml(resetUrl),
   });
 
-  if (!sent && !process.env.BREVO_API_KEY) {
+  if (!emailResult.success) {
     return res.status(400).json({
-      error: "BREVO_API_KEY is not configured on the server. Please check server environment settings.",
+      error: emailResult.error || "Failed to send reset email.",
     });
   }
 

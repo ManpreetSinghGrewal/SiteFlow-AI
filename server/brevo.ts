@@ -5,11 +5,17 @@ interface SendEmailOptions {
   textContent?: string;
 }
 
-export async function sendBrevoEmail(options: SendEmailOptions): Promise<boolean> {
+export interface BrevoResult {
+  success: boolean;
+  error?: string;
+}
+
+export async function sendBrevoEmail(options: SendEmailOptions): Promise<BrevoResult> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
-    console.warn("BREVO_API_KEY is not configured in environment variables.");
-    return false;
+    const errorMsg = "BREVO_API_KEY is not configured in Vercel environment variables.";
+    console.warn(errorMsg);
+    return { success: false, error: errorMsg };
   }
 
   const senderEmail = process.env.BREVO_SENDER_EMAIL || "noreply@siteflowai.com";
@@ -34,15 +40,23 @@ export async function sendBrevoEmail(options: SendEmailOptions): Promise<boolean
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`Brevo API error status ${res.status}:`, errorText);
-      return false;
+      let detail = `Brevo API error (${res.status})`;
+      try {
+        const parsed = JSON.parse(errorText);
+        if (parsed.message) detail = `Brevo error: ${parsed.message}`;
+      } catch {
+        detail = `Brevo error: ${errorText}`;
+      }
+      console.error(detail);
+      return { success: false, error: detail };
     }
 
     console.log(`Email successfully dispatched via Brevo to ${options.to[0]?.email}`);
-    return true;
+    return { success: true };
   } catch (error) {
-    console.error("Error sending email via Brevo:", error);
-    return false;
+    const errorMsg = error instanceof Error ? error.message : "Network error contacting Brevo API";
+    console.error("Error sending email via Brevo:", errorMsg);
+    return { success: false, error: errorMsg };
   }
 }
 
@@ -143,4 +157,3 @@ export function getOtpEmailHtml(otpCode: string): string {
     </html>
   `;
 }
-
