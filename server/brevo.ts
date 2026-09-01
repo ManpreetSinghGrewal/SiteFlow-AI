@@ -19,7 +19,7 @@ export async function sendBrevoEmail(options: SendEmailOptions): Promise<BrevoRe
 
   // 1. Try Brevo HTTPS REST API
   if (apiKey) {
-    const senderEmail = process.env.BREVO_SENDER_EMAIL || "noreply@siteflowai.com";
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || "manpreetsgrewal5911@gmail.com";
     const senderName = process.env.BREVO_SENDER_NAME || "SiteFlow AI";
 
     try {
