@@ -12,6 +12,70 @@ import type { ProfileDoc, UserDoc } from "../types.js";
 const router = Router();
 
 /**
+ * BACKWARD COMPATIBLE & DIRECT SEND-OTP ROUTE
+ */
+router.post("/send-otp", async (req, res) => {
+  const { email, password } = req.body as { email?: string; password?: string };
+
+  if (!email) {
+    return res.status(400).json({ error: "Email address is required" });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const db = await connectMongo();
+  const users = db.collection<UserDoc>("users");
+
+  const existing = await users.findOne({ email: normalizedEmail });
+  if (existing && existing.isVerified !== false) {
+    return res.status(409).json({ error: "An account with this email already exists. Please log in." });
+  }
+
+  const now = new Date();
+  const userId = existing ? existing._id : new ObjectId();
+  const passwordHash = password ? await bcrypt.hash(password, 12) : (existing?.passwordHash || "");
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  if (existing) {
+    await users.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          verificationCode: otp,
+          verificationExpiresAt: expiresAt,
+          updatedAt: now,
+        },
+      }
+    );
+  } else {
+    await users.insertOne({
+      _id: userId,
+      email: normalizedEmail,
+      passwordHash,
+      isVerified: false,
+      verificationCode: otp,
+      verificationExpiresAt: expiresAt,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  const emailResult = await sendBrevoEmail({
+    to: [{ email: normalizedEmail }],
+    subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
+    htmlContent: getOtpEmailHtml(otp),
+  });
+
+  if (!emailResult.success) {
+    return res.status(400).json({
+      error: emailResult.error || "Failed to send verification email via Brevo.",
+    });
+  }
+
+  res.json({ ok: true, message: "Verification code sent to your email!", email: normalizedEmail });
+});
+
+/**
  * SIGNUP CONTROLLER
  * Registers new user with isVerified = false and awaits Brevo 6-digit OTP email dispatch
  */
@@ -83,7 +147,7 @@ router.post("/signup", async (req, res) => {
     });
   }
 
-  // EXPLICITLY AWAIT Brevo OTP email dispatch to ensure Vercel Serverless Function doesn't kill execution
+  // EXPLICITLY AWAIT Brevo OTP email dispatch
   const emailResult = await sendBrevoEmail({
     to: [{ email: normalizedEmail, name }],
     subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
