@@ -18,6 +18,9 @@ export function Navbar() {
 
   const GITHUB_REPO_URL = "https://github.com/ManpreetSinghGrewal/SiteFlow-AI";
 
+  const hasToken = typeof window !== "undefined" && !!localStorage.getItem("siteflow_auth_token");
+  const isAuth = !!user || (isLoading && hasToken);
+
   return (
     <nav className="flex items-center justify-between px-6 md:px-10 py-4 max-w-7xl w-full mx-auto bg-transparent z-50">
       <div 
@@ -45,7 +48,7 @@ export function Navbar() {
         >
           About Us
         </a>
-        {user && (
+        {isAuth && (
           <>
             <a 
               href="/projects" 
@@ -110,7 +113,7 @@ export function Navbar() {
             onClick={() => navigate("/builder")}
             className="hidden sm:inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary/90 transition-all active:scale-[0.98] btn-glowing-border"
           >
-            {user ? "Launch Builder" : "Get started"}
+            {isAuth ? "Launch Builder" : "Get started"}
             <ChevronRight className="w-4 h-4" />
           </button>
         )}
