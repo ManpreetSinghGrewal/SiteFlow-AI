@@ -4,6 +4,9 @@ export interface UserDoc {
   _id: ObjectId;
   email: string;
   passwordHash: string;
+  isVerified?: boolean;
+  verificationCode?: string | null;
+  verificationExpiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

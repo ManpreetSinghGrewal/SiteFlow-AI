@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { apiFetch, setToken } from "@/lib/api";
+import { apiFetch, setToken, ApiError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import type { AuthResponse } from "@/types/database";
 import {
@@ -63,14 +63,19 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
       setIsOpen(false);
       resetForm();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Authentication failed";
-      toast.error(message);
+      if (error instanceof ApiError && error.status === 403) {
+        setIsOtpStep(true);
+        toast.info("📧 Please verify your email first. A new 6-digit OTP code has been sent!");
+      } else {
+        const message = error instanceof Error ? error.message : "Authentication failed";
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendOtp = async () => {
+  const handleSignupSubmit = async () => {
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
@@ -83,7 +88,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
-      await apiFetch<{ message: string }>("/api/auth/send-otp", {
+      await apiFetch<{ ok: boolean; message: string }>("/api/auth/signup", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
@@ -91,7 +96,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
       setIsOtpStep(true);
       toast.success("📧 Verification code sent to your email!");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to send verification code";
+      const message = error instanceof Error ? error.message : "Signup failed";
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -106,9 +111,9 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
-      const data = await apiFetch<AuthResponse>("/api/auth/verify-otp-signup", {
+      const data = await apiFetch<AuthResponse>("/api/auth/verify-email", {
         method: "POST",
-        body: JSON.stringify({ email, password, otp: otp.trim() }),
+        body: JSON.stringify({ email: email.trim(), otp: otp.trim() }),
       });
 
       setToken(data.token);
@@ -119,6 +124,28 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
       resetForm();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Verification failed";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!email) {
+      toast.error("Please enter your email address first");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await apiFetch<{ message: string }>("/api/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      toast.success("📧 A new 6-digit verification code has been sent to your email!");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to resend code";
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -248,7 +275,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                     placeholder="123456"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                    className="h-12 text-center text-2xl font-bold tracking-[10px] rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                    className="h-14 text-center text-3xl font-extrabold tracking-[12px] rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/40 text-primary bg-primary/5"
                     autoFocus
                   />
                 </div>
@@ -263,7 +290,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    Verify & Create Account <ArrowRight className="ml-2 h-4 w-4" />
+                    Verify & Complete Sign Up <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
@@ -280,7 +307,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   className="text-primary font-medium hover:underline inline-flex items-center gap-1"
-                  onClick={handleSendOtp}
+                  onClick={handleResendOtp}
                   disabled={isLoading}
                 >
                   <RefreshCw className="w-3 h-3" /> Resend OTP Code
@@ -415,14 +442,14 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
                 <Button
                   className="w-full h-11 rounded-xl font-semibold btn-glowing-border mt-2"
-                  onClick={handleSendOtp}
+                  onClick={handleSignupSubmit}
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      Send 6-Digit OTP Code <ArrowRight className="ml-2 h-4 w-4" />
+                      Send Verification Code <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
