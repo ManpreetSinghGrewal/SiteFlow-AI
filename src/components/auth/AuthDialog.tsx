@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
 
 export function AuthDialog({ children }: { children: React.ReactNode }) {
   const { refreshUser } = useAuth();
@@ -24,18 +24,26 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  
+  // OTP Verification Step
+  const [isOtpStep, setIsOtpStep] = useState(false);
+  const [otp, setOtp] = useState("");
+
+  // Forgot Password Flow
   const [showReset, setShowReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
   const resetForm = () => {
     setEmail("");
     setPassword("");
+    setOtp("");
+    setIsOtpStep(false);
     setShowPassword(false);
     setShowReset(false);
     setResetSent(false);
   };
 
-  const handleAuth = async (type: "login" | "signup") => {
+  const handleLogin = async () => {
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
@@ -43,8 +51,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
-      const endpoint = type === "signup" ? "/api/auth/signup" : "/api/auth/login";
-      const data = await apiFetch<AuthResponse>(endpoint, {
+      const data = await apiFetch<AuthResponse>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
@@ -52,15 +59,66 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
       setToken(data.token);
       await refreshUser();
 
-      toast.success(
-        type === "signup"
-          ? "🎉 Account created! Welcome to SiteFlow AI."
-          : "✨ Welcome back! Logged in successfully."
-      );
+      toast.success("✨ Welcome back! Logged in successfully.");
       setIsOpen(false);
       resetForm();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Authentication failed";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await apiFetch<{ message: string }>("/api/auth/send-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+
+      setIsOtpStep(true);
+      toast.success("📧 Verification code sent to your email!");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to send verification code";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.trim().length !== 6) {
+      toast.error("Please enter the 6-digit OTP code sent to your email");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const data = await apiFetch<AuthResponse>("/api/auth/verify-otp-signup", {
+        method: "POST",
+        body: JSON.stringify({ email, password, otp: otp.trim() }),
+      });
+
+      setToken(data.token);
+      await refreshUser();
+
+      toast.success("🎉 Email verified & account created! Welcome to SiteFlow AI.");
+      setIsOpen(false);
+      resetForm();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Verification failed";
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -97,14 +155,16 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
         {/* Glowing Top Banner */}
         <div className="relative px-6 pt-8 pb-6 bg-gradient-to-br from-primary/15 via-sky-500/10 to-transparent border-b border-border/50 text-center">
           <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center mb-3 shadow-lg shadow-primary/20 animate-logo-pulse">
-            <Sparkles className="w-6 h-6 text-primary" />
+            {isOtpStep ? <ShieldCheck className="w-6 h-6 text-primary" /> : <Sparkles className="w-6 h-6 text-primary" />}
           </div>
           <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
-            {showReset ? "Reset Password" : "SiteFlow AI"}
+            {showReset ? "Reset Password" : isOtpStep ? "Verify Your Email" : "SiteFlow AI"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground mt-1 max-w-[280px] mx-auto">
+          <DialogDescription className="text-xs text-muted-foreground mt-1 max-w-[300px] mx-auto">
             {showReset
               ? "Enter your email address and we'll send you a secure Brevo reset link."
+              : isOtpStep
+              ? `We sent a 6-digit verification code to ${email}`
               : "Build high-converting websites in seconds powered by Gemini AI."}
           </DialogDescription>
         </div>
@@ -173,7 +233,62 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                 </>
               )}
             </div>
+          ) : isOtpStep ? (
+            /* STEP 2: 6-DIGIT OTP VERIFICATION SCREEN */
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp-input" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  6-Digit OTP Code
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="otp-input"
+                    type="text"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    className="h-12 text-center text-2xl font-bold tracking-[10px] rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <Button
+                className="w-full h-11 rounded-xl font-semibold btn-glowing-border mt-2"
+                onClick={handleVerifyOtp}
+                disabled={isLoading || otp.length !== 6}
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Verify & Create Account <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+
+              <div className="flex items-center justify-between text-xs pt-2">
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsOtpStep(false)}
+                >
+                  ← Edit Email
+                </button>
+
+                <button
+                  type="button"
+                  className="text-primary font-medium hover:underline inline-flex items-center gap-1"
+                  onClick={handleSendOtp}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className="w-3 h-3" /> Resend OTP Code
+                </button>
+              </div>
+            </div>
           ) : (
+            /* STEP 1: LOGIN / SIGNUP FORM */
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/60 rounded-xl mb-4">
                 <TabsTrigger value="login" className="rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
@@ -240,7 +355,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
                 <Button
                   className="w-full h-11 rounded-xl font-semibold btn-glowing-border mt-2"
-                  onClick={() => handleAuth("login")}
+                  onClick={handleLogin}
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -300,14 +415,14 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
                 <Button
                   className="w-full h-11 rounded-xl font-semibold btn-glowing-border mt-2"
-                  onClick={() => handleAuth("signup")}
+                  onClick={handleSendOtp}
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      Create Free Account <ArrowRight className="ml-2 h-4 w-4" />
+                      Send 6-Digit OTP Code <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>

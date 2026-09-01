@@ -5,11 +5,133 @@ import { ObjectId } from "mongodb";
 import { connectMongo } from "../mongodb.js";
 import { requireAuth, signToken } from "../middleware/auth.js";
 import { toIso } from "../serialize.js";
-import { sendBrevoEmail, getWelcomeEmailHtml, getResetPasswordEmailHtml } from "../brevo.js";
+import { sendBrevoEmail, getWelcomeEmailHtml, getResetPasswordEmailHtml, getOtpEmailHtml } from "../brevo.js";
 import type { AuthRequest } from "../middleware/auth.js";
 import type { ProfileDoc, UserDoc } from "../types.js";
 
 const router = Router();
+
+router.post("/send-otp", async (req, res) => {
+  const { email, password } = req.body as { email?: string; password?: string };
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters" });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const db = await connectMongo();
+  const users = db.collection<UserDoc>("users");
+
+  const existing = await users.findOne({ email: normalizedEmail });
+  if (existing) {
+    return res.status(409).json({ error: "An account with this email already exists" });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await db.collection("email_otps").updateOne(
+    { email: normalizedEmail },
+    {
+      $set: {
+        email: normalizedEmail,
+        otp,
+        expiresAt,
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true }
+  );
+
+  const sent = await sendBrevoEmail({
+    to: [{ email: normalizedEmail }],
+    subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
+    htmlContent: getOtpEmailHtml(otp),
+  });
+
+  if (!sent && !process.env.BREVO_API_KEY) {
+    return res.status(400).json({
+      error: "BREVO_API_KEY is not configured on the server. Please check server environment settings.",
+    });
+  }
+
+  res.json({ message: "Verification code sent to your email!" });
+});
+
+router.post("/verify-otp-signup", async (req, res) => {
+  const { email, password, otp, displayName } = req.body as {
+    email?: string;
+    password?: string;
+    otp?: string;
+    displayName?: string;
+  };
+
+  if (!email || !password || !otp) {
+    return res.status(400).json({ error: "Email, password, and OTP code are required" });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const db = await connectMongo();
+
+  const otpRecord = await db.collection("email_otps").findOne({ email: normalizedEmail });
+
+  if (!otpRecord || otpRecord.otp !== otp.trim() || new Date(otpRecord.expiresAt) < new Date()) {
+    return res.status(400).json({ error: "Invalid or expired verification code. Please request a new code." });
+  }
+
+  const users = db.collection<UserDoc>("users");
+  const existing = await users.findOne({ email: normalizedEmail });
+  if (existing) {
+    return res.status(409).json({ error: "An account with this email already exists" });
+  }
+
+  const now = new Date();
+  const userId = new ObjectId();
+  const passwordHash = await bcrypt.hash(password, 12);
+  const name = displayName?.trim() || normalizedEmail.split("@")[0];
+
+  await users.insertOne({
+    _id: userId,
+    email: normalizedEmail,
+    passwordHash,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const profiles = db.collection<ProfileDoc>("profiles");
+  await profiles.insertOne({
+    _id: userId,
+    userId,
+    display_name: name,
+    business_name: null,
+    created_at: now,
+    updated_at: now,
+  });
+
+  await db.collection("email_otps").deleteOne({ email: normalizedEmail });
+
+  const token = signToken(userId);
+
+  // Send Brevo Welcome Email
+  sendBrevoEmail({
+    to: [{ email: normalizedEmail, name }],
+    subject: "Welcome to SiteFlow AI! 🚀",
+    htmlContent: getWelcomeEmailHtml(name),
+  }).catch((err) => console.error("Welcome email error:", err));
+
+  res.status(201).json({
+    token,
+    user: {
+      id: userId.toString(),
+      email: normalizedEmail,
+      created_at: toIso(now),
+    },
+  });
+});
 
 router.post("/signup", async (req, res) => {
   const { email, password, displayName } = req.body as {
@@ -128,7 +250,6 @@ router.post("/forgot-password", async (req, res) => {
   const user = await db.collection<UserDoc>("users").findOne({ email: normalizedEmail });
 
   if (!user) {
-    // For security, respond success even if email not found
     return res.json({ message: "If an account with that email exists, a password reset link has been sent." });
   }
 
@@ -159,7 +280,7 @@ router.post("/forgot-password", async (req, res) => {
 
   if (!sent && !process.env.BREVO_API_KEY) {
     return res.status(400).json({
-      error: "BREVO_API_KEY is not configured on the server. Please contact support or check server environment.",
+      error: "BREVO_API_KEY is not configured on the server. Please check server environment settings.",
     });
   }
 

@@ -110,3 +110,37 @@ export function getResetPasswordEmailHtml(resetUrl: string): string {
     </html>
   `;
 }
+
+export function getOtpEmailHtml(otpCode: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 40px 20px; }
+        .container { max-width: 560px; margin: 0 auto; background: #1e293b; border-radius: 16px; border: 1px solid #334155; padding: 40px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); text-align: center; }
+        .logo { font-size: 24px; font-weight: bold; color: #38bdf8; text-decoration: none; display: inline-block; margin-bottom: 24px; }
+        h1 { font-size: 22px; color: #ffffff; margin-top: 0; }
+        p { color: #94a3b8; font-size: 15px; line-height: 1.6; }
+        .otp-box { display: inline-block; background: #0f172a; border: 2px solid #0284c7; border-radius: 12px; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #38bdf8; padding: 16px 32px; margin: 24px 0; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
+        .note { font-size: 13px; color: #64748b; margin-top: 16px; }
+        .footer { margin-top: 36px; padding-top: 20px; border-top: 1px solid #334155; font-size: 12px; color: #64748b; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <a href="https://site-flow-ai-eight.vercel.app/" class="logo">✨ SiteFlow AI</a>
+        <h1>Verify Your Email Address 🔐</h1>
+        <p>Use the 6-digit verification code below to complete your SiteFlow AI registration:</p>
+        <div class="otp-box">${otpCode}</div>
+        <p class="note">This OTP code is valid for 10 minutes. Do not share this code with anyone.</p>
+        <div class="footer">
+          &copy; ${new Date().getFullYear()} SiteFlow AI. All rights reserved.
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
