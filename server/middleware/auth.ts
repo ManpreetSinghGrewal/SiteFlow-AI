@@ -1,12 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
-import { connectMongo } from "../mongodb.js";
-import type { UserDoc } from "../types.js";
+import { connectMongo } from "../mongodb";
+import type { UserDoc } from "../types";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not set in environment variables");
+function getJwtSecret(): string {
+  return process.env.JWT_SECRET || "siteflow-dev-secret-change-in-production";
 }
 
 export interface AuthRequest extends Request {
@@ -15,7 +14,7 @@ export interface AuthRequest extends Request {
 }
 
 export function signToken(userId: ObjectId): string {
-  return jwt.sign({ sub: userId.toString() }, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ sub: userId.toString() }, getJwtSecret(), { expiresIn: "30d" });
 }
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
@@ -25,7 +24,7 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   }
 
   try {
-    const payload = jwt.verify(header.slice(7), JWT_SECRET) as { sub: string };
+    const payload = jwt.verify(header.slice(7), getJwtSecret()) as { sub: string };
     if (!ObjectId.isValid(payload.sub)) {
       return res.status(401).json({ error: "Unauthorized" });
     }

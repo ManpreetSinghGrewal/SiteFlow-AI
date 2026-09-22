@@ -3,11 +3,11 @@ import cors from "cors";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { closeMongo, connectMongo, pingMongo } from "./mongodb.js";
-import authRoutes from "./routes/auth.js";
-import profileRoutes from "./routes/profiles.js";
-import projectRoutes from "./routes/projects.js";
-import chatRoutes from "./routes/chat.js";
+import { closeMongo, connectMongo, pingMongo } from "./mongodb";
+import authRoutes from "./routes/auth";
+import profileRoutes from "./routes/profiles";
+import projectRoutes from "./routes/projects";
+import chatRoutes from "./routes/chat";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === "production";
