@@ -1,11 +1,11 @@
 import "dotenv/config";
 import cors from "cors";
 import express, { Request, Response, NextFunction } from "express";
-import authRoutes from "../server/routes/auth";
-import profileRoutes from "../server/routes/profiles";
-import projectRoutes from "../server/routes/projects";
-import chatRoutes from "../server/routes/chat";
-import { connectMongo, pingMongo } from "../server/mongodb";
+import authRoutes from "./server/routes/auth";
+import profileRoutes from "./server/routes/profiles";
+import projectRoutes from "./server/routes/projects";
+import chatRoutes from "./server/routes/chat";
+import { connectMongo, pingMongo } from "./server/mongodb";
 
 const app = express();
 
