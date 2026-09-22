@@ -118,14 +118,11 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
   const handleGoogleSignIn = async () => {
     let googleEmail = email.trim();
-    if (!googleEmail) {
-      const prompted = prompt("Please enter your Google Email address to receive your 6-digit verification code:");
-      if (!prompted || !prompted.includes("@")) {
-        toast.error("Valid Google Email address is required");
-        return;
-      }
-      googleEmail = prompted.trim();
-      setEmail(googleEmail);
+    if (!googleEmail || !googleEmail.includes("@")) {
+      const inputEl = document.getElementById("signup-email") as HTMLInputElement;
+      if (inputEl) inputEl.focus();
+      toast.info("Please enter your email address to sign up with Google");
+      return;
     }
 
     setIsLoading(true);
