@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
-import { connectMongo } from "../mongodb";
-import { requireAuth } from "../middleware/auth";
-import { parseObjectId, serializeProject } from "../serialize";
-import type { AuthRequest } from "../middleware/auth";
-import type { ProjectDoc } from "../types";
+import { connectMongo } from "../mongodb.js";
+import { requireAuth } from "../middleware/auth.js";
+import { parseObjectId, serializeProject } from "../serialize.js";
+import type { AuthRequest } from "../middleware/auth.js";
+import type { ProjectDoc } from "../types.js";
 
 const router = Router();
 
