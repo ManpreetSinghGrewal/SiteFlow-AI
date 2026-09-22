@@ -8,11 +8,23 @@ if (!uri) {
 const client = new MongoClient(uri);
 
 let db: Db | null = null;
+let indexesCreated = false;
 
 export async function connectMongo(): Promise<Db> {
   if (db) return db;
   await client.connect();
   db = client.db();
+
+  // Create TTL index on email_otps collection so OTP records auto-delete after 10 minutes (600s)
+  if (!indexesCreated) {
+    try {
+      await db.collection("email_otps").createIndex({ createdAt: 1 }, { expireAfterSeconds: 600 });
+      indexesCreated = true;
+    } catch (err) {
+      console.warn("MongoDB TTL index initialization notice:", err);
+    }
+  }
+
   return db;
 }
 
@@ -26,6 +38,7 @@ export async function closeMongo(): Promise<void> {
   if (db) {
     await client.close();
     db = null;
+    indexesCreated = false;
   }
 }
 

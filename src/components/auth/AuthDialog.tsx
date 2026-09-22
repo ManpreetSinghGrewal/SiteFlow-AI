@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiFetch, setToken, ApiError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import type { AuthResponse } from "@/types/database";
@@ -25,22 +25,40 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   
-  // OTP Verification Step
+  // OTP Verification Step & 60s Cooldown Timer
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otp, setOtp] = useState("");
+  const [cooldown, setCooldown] = useState(60);
 
   // Forgot Password Flow
   const [showReset, setShowReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  // 60-second Resend Cooldown Countdown Effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isOtpStep && cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isOtpStep, cooldown]);
 
   const resetForm = () => {
     setEmail("");
     setPassword("");
     setOtp("");
     setIsOtpStep(false);
+    setCooldown(60);
     setShowPassword(false);
     setShowReset(false);
     setResetSent(false);
+  };
+
+  const startOtpFlow = () => {
+    setIsOtpStep(true);
+    setCooldown(60);
   };
 
   const handleLogin = async () => {
@@ -64,7 +82,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
       resetForm();
     } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 403) {
-        setIsOtpStep(true);
+        startOtpFlow();
         toast.info("📧 Please verify your email first. A new 6-digit OTP code has been sent!");
       } else {
         const message = error instanceof Error ? error.message : "Authentication failed";
@@ -89,8 +107,8 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email: emailToUse, password }),
       });
 
-      setIsOtpStep(true);
-      toast.success("📧 Verification code sent to your email!");
+      startOtpFlow();
+      toast.success("📧 6-Digit Verification code sent to your email!");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to send code";
       toast.error(message);
@@ -111,8 +129,21 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
       setEmail(googleEmail);
     }
 
-    toast.info(`🚀 Starting Google verification for ${googleEmail}...`);
-    await handleSendOtp(googleEmail);
+    setIsLoading(true);
+    try {
+      await apiFetch<{ requiresOtp: boolean; message: string }>("/api/auth/google", {
+        method: "POST",
+        body: JSON.stringify({ email: googleEmail }),
+      });
+
+      startOtpFlow();
+      toast.success(`🚀 Google verification code sent to ${googleEmail}!`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Google sign-in failed";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -128,7 +159,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
-      const data = await apiFetch<AuthResponse>("/api/auth/verify-email", {
+      const data = await apiFetch<AuthResponse>("/api/auth/verify-otp", {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), otp: otp.trim(), password }),
       });
@@ -256,7 +287,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
               )}
             </div>
           ) : isOtpStep ? (
-            /* STEP 2: 6-DIGIT OTP VERIFICATION + PASSWORD SETUP SCREEN */
+            /* STEP 2: 6-DIGIT OTP VERIFICATION + PASSWORD SETUP SCREEN (WITH 60S COOLDOWN) */
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="otp-input" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -308,12 +339,12 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    Verify OTP & Save Password <ArrowRight className="ml-2 h-4 w-4" />
+                    Verify OTP & Complete Sign Up <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
 
-              <div className="flex items-center justify-between text-xs pt-2">
+              <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
                 <button
                   type="button"
                   className="text-muted-foreground hover:text-foreground"
@@ -324,18 +355,23 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
                 <button
                   type="button"
-                  className="text-primary font-medium hover:underline inline-flex items-center gap-1"
-                  onClick={() => handleSendOtp()}
-                  disabled={isLoading}
+                  className={`font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                    cooldown > 0 ? "text-muted-foreground cursor-not-allowed" : "text-primary hover:underline"
+                  }`}
+                  onClick={() => {
+                    if (cooldown === 0) handleSendOtp();
+                  }}
+                  disabled={isLoading || cooldown > 0}
                 >
-                  <RefreshCw className="w-3 h-3" /> Resend OTP Code
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                  {cooldown > 0 ? `Resend Code (${cooldown}s)` : "Resend OTP Code"}
                 </button>
               </div>
             </div>
           ) : (
             /* STEP 1: SIGN UP / SIGN IN TABS WITH GOOGLE OPTION */
             <div className="space-y-4">
-              {/* GOOGLE SIGN IN BUTTON */}
+              {/* GOOGLE 1-CLICK SSO BUTTON */}
               <Button
                 type="button"
                 variant="outline"

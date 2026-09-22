@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch, setToken } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -21,6 +21,18 @@ export default function VerifyEmail() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [cooldown, setCooldown] = useState(60);
+
+  // 60-second Countdown Timer
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -42,7 +54,7 @@ export default function VerifyEmail() {
 
     setIsLoading(true);
     try {
-      const data = await apiFetch<AuthResponse>("/api/auth/verify-email", {
+      const data = await apiFetch<AuthResponse>("/api/auth/verify-otp", {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), otp: otp.trim(), password }),
       });
@@ -68,11 +80,12 @@ export default function VerifyEmail() {
 
     setIsResending(true);
     try {
-      await apiFetch<{ message: string }>("/api/auth/resend-verification", {
+      await apiFetch<{ message: string }>("/api/auth/send-otp", {
         method: "POST",
         body: JSON.stringify({ email: email.trim() }),
       });
 
+      setCooldown(60);
       toast.success("📧 A new 6-digit verification code has been sent to your email!");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to resend verification code";
@@ -178,12 +191,16 @@ export default function VerifyEmail() {
             <span className="text-muted-foreground">Didn't receive the code?</span>
             <button
               type="button"
-              className="text-primary font-semibold hover:underline inline-flex items-center gap-1.5"
-              onClick={handleResend}
-              disabled={isResending}
+              className={`font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                cooldown > 0 ? "text-muted-foreground cursor-not-allowed" : "text-primary hover:underline"
+              }`}
+              onClick={() => {
+                if (cooldown === 0) handleResend();
+              }}
+              disabled={isResending || cooldown > 0}
             >
               {isResending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-              Resend Code
+              {cooldown > 0 ? `Resend Code (${cooldown}s)` : "Resend OTP Code"}
             </button>
           </div>
         </div>
