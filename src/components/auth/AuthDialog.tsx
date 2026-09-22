@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -71,7 +70,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
     try {
       const data = await apiFetch<AuthResponse>("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       setToken(data.token);
@@ -95,8 +94,8 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
   const handleSendOtp = async (targetEmail?: string) => {
     const emailToUse = targetEmail || email;
-    if (!emailToUse) {
-      toast.error("Please enter your email address");
+    if (!emailToUse || !emailToUse.includes("@")) {
+      toast.error("Please enter a valid email address");
       return;
     }
 
@@ -104,7 +103,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
     try {
       await apiFetch<{ ok: boolean; message: string }>("/api/auth/send-otp", {
         method: "POST",
-        body: JSON.stringify({ email: emailToUse, password }),
+        body: JSON.stringify({ email: emailToUse.trim(), password }),
       });
 
       startOtpFlow();
@@ -188,7 +187,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
     try {
       await apiFetch<{ message: string }>("/api/auth/forgot-password", {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: email.trim() }),
       });
       setResetSent(true);
       toast.success("Password reset link sent! Check your inbox.");
@@ -203,19 +202,19 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden border border-primary/20 bg-background/95 backdrop-blur-xl shadow-2xl rounded-3xl">
+      <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border border-primary/30 bg-card/95 backdrop-blur-3xl shadow-[0_0_50px_rgba(56,189,248,0.18)] rounded-3xl text-foreground">
         
-        {/* Glowing Top Banner */}
-        <div className="relative px-6 pt-8 pb-6 bg-gradient-to-br from-primary/15 via-sky-500/10 to-transparent border-b border-border/50 text-center">
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center mb-3 shadow-lg shadow-primary/20 animate-logo-pulse">
-            {isOtpStep ? <ShieldCheck className="w-6 h-6 text-primary" /> : <Sparkles className="w-6 h-6 text-primary" />}
+        {/* Glowing Top Banner Header */}
+        <div className="relative px-6 pt-8 pb-6 bg-gradient-to-br from-primary/20 via-sky-500/10 to-transparent border-b border-border/40 text-center">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center mb-3 shadow-lg shadow-primary/20 animate-logo-pulse">
+            {isOtpStep ? <ShieldCheck className="w-7 h-7 text-primary" /> : <Sparkles className="w-7 h-7 text-primary" />}
           </div>
-          <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
+          <DialogTitle className="text-2xl font-extrabold text-foreground tracking-tight">
             {showReset ? "Reset Password" : isOtpStep ? "Verify Email & Set Password" : "Sign Up for SiteFlow AI"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground mt-1 max-w-[300px] mx-auto">
+          <DialogDescription className="text-xs text-muted-foreground mt-1.5 max-w-[320px] mx-auto leading-relaxed">
             {showReset
-              ? "Enter your email address and we'll send you a secure Brevo reset link."
+              ? "Enter your email address to receive a secure Brevo reset link."
               : isOtpStep
               ? `We sent a 6-digit verification code to ${email}`
               : "Create an account to start generating websites in seconds."}
@@ -223,20 +222,20 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Modal Form Body */}
-        <div className="p-6">
+        <div className="p-6 space-y-4">
           {showReset ? (
             <div className="space-y-4">
               {resetSent ? (
-                <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30 text-center space-y-2">
+                <div className="p-5 rounded-2xl bg-primary/10 border border-primary/30 text-center space-y-2">
                   <CheckCircle2 className="w-8 h-8 text-primary mx-auto" />
                   <h4 className="text-sm font-semibold text-foreground">Reset Email Sent!</h4>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     We've dispatched a password reset link to <strong className="text-foreground">{email}</strong>. Check your inbox to set a new password.
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-2 text-xs text-primary hover:text-primary"
+                    className="mt-2 text-xs text-primary hover:text-primary font-semibold"
                     onClick={() => { setShowReset(false); setResetSent(false); }}
                   >
                     Back to Sign In
@@ -244,7 +243,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="reset-email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Email Address
                     </Label>
@@ -256,14 +255,14 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                         placeholder="name@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-11 rounded-xl border-border/80 focus:ring-2 focus:ring-primary/40"
+                        className="pl-10 h-12 rounded-xl border-border/80 bg-muted/40 focus:bg-background focus:ring-2 focus:ring-primary/40 text-sm font-medium"
                         required
                       />
                     </div>
                   </div>
 
                   <Button
-                    className="w-full h-11 rounded-xl font-semibold btn-glowing-border"
+                    className="w-full h-12 rounded-xl font-bold btn-glowing-border shadow-lg shadow-primary/20"
                     onClick={handlePasswordReset}
                     disabled={isLoading}
                   >
@@ -278,7 +277,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
                   <Button
                     variant="ghost"
-                    className="w-full text-xs text-muted-foreground hover:text-foreground"
+                    className="w-full text-xs text-muted-foreground hover:text-foreground font-medium"
                     onClick={() => setShowReset(false)}
                   >
                     Back to Sign In
@@ -289,7 +288,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
           ) : isOtpStep ? (
             /* STEP 2: 6-DIGIT OTP VERIFICATION + PASSWORD SETUP SCREEN (WITH 60S COOLDOWN) */
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="otp-input" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   6-Digit OTP Verification Code
                 </Label>
@@ -300,14 +299,14 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                   placeholder="123456"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  className="h-12 text-center text-2xl font-bold tracking-[10px] rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/30 text-primary bg-primary/5"
+                  className="h-14 text-center text-2xl font-bold tracking-[10px] rounded-xl border-primary/40 bg-primary/10 text-primary focus:ring-2 focus:ring-primary/40"
                   autoFocus
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="otp-password" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Set Password for Direct Sign-In
+                  Create Password for Direct Sign-In
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -317,12 +316,12 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                     placeholder="Create a strong password (6+ chars)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-11 rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                    className="pl-10 pr-10 h-12 rounded-xl border-border/80 bg-muted/40 focus:bg-background focus:ring-2 focus:ring-primary/40 text-sm font-medium"
                     required
                   />
                   <button
                     type="button"
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -331,23 +330,23 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
               </div>
 
               <Button
-                className="w-full h-11 rounded-xl font-semibold btn-glowing-border mt-2"
+                className="w-full h-12 rounded-xl font-bold btn-glowing-border shadow-lg shadow-primary/20 mt-2 text-base"
                 onClick={handleVerifyOtp}
                 disabled={isLoading || otp.length !== 6 || password.length < 6}
               >
                 {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    Verify OTP & Complete Sign Up <ArrowRight className="ml-2 h-4 w-4" />
+                    Verify OTP & Complete Sign Up <ArrowRight className="ml-2 h-5 w-5" />
                   </>
                 )}
               </Button>
 
-              <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
+              <div className="flex items-center justify-between text-xs pt-3 border-t border-border/40">
                 <button
                   type="button"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground font-medium"
                   onClick={() => setIsOtpStep(false)}
                 >
                   ← Change Email
@@ -375,11 +374,11 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-11 rounded-xl border-border/80 hover:bg-muted/50 font-medium flex items-center justify-center gap-3 transition-colors"
+                className="w-full h-12 rounded-xl border-border/80 bg-muted/30 hover:bg-muted/60 font-semibold flex items-center justify-center gap-3 transition-all text-sm active:scale-[0.99]"
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -400,20 +399,21 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                 Sign up with Google
               </Button>
 
-              <div className="relative flex items-center justify-center my-2">
-                <div className="border-t border-border/60 w-full" />
-                <span className="bg-background px-3 text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
+              {/* SEAMLESS DIVIDER */}
+              <div className="relative flex items-center justify-center my-3">
+                <div className="border-t border-border/50 w-full" />
+                <span className="bg-card px-3 py-1 rounded-full text-[10px] font-bold text-muted-foreground uppercase tracking-widest border border-border/40 shrink-0">
                   or continue with email
                 </span>
-                <div className="border-t border-border/60 w-full" />
+                <div className="border-t border-border/50 w-full" />
               </div>
 
               <Tabs defaultValue="signup" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/60 rounded-xl mb-4">
-                  <TabsTrigger value="signup" className="rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                <TabsList className="grid w-full grid-cols-2 p-1.5 bg-muted/50 rounded-2xl mb-4 border border-border/40">
+                  <TabsTrigger value="signup" className="rounded-xl text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md">
                     Sign Up
                   </TabsTrigger>
-                  <TabsTrigger value="login" className="rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                  <TabsTrigger value="login" className="rounded-xl text-xs font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md">
                     Sign In
                   </TabsTrigger>
                 </TabsList>
@@ -421,7 +421,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                 {/* CREATE ACCOUNT (SIGN UP) TAB */}
                 <TabsContent value="signup" className="space-y-4 mt-0">
                   <div className="space-y-1.5">
-                    <Label htmlFor="signup-email" className="text-xs font-medium text-foreground">
+                    <Label htmlFor="signup-email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Email Address
                     </Label>
                     <div className="relative">
@@ -432,22 +432,22 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                         placeholder="name@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-11 rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                        className="pl-10 h-12 rounded-xl border-border/80 bg-muted/40 focus:bg-background focus:ring-2 focus:ring-primary/40 text-sm font-medium"
                         required
                       />
                     </div>
                   </div>
 
                   <Button
-                    className="w-full h-11 rounded-xl font-semibold btn-glowing-border mt-2"
+                    className="w-full h-12 rounded-xl font-bold btn-glowing-border shadow-lg shadow-primary/20 text-sm"
                     onClick={() => handleSendOtp()}
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
                       <>
-                        Sign Up & Send OTP Code <ArrowRight className="ml-2 h-4 w-4" />
+                        Sign Up & Send OTP Code <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}
                   </Button>
@@ -456,7 +456,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                 {/* SIGN IN TAB */}
                 <TabsContent value="login" className="space-y-4 mt-0">
                   <div className="space-y-1.5">
-                    <Label htmlFor="login-email" className="text-xs font-medium text-foreground">
+                    <Label htmlFor="login-email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Email Address
                     </Label>
                     <div className="relative">
@@ -467,7 +467,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                         placeholder="name@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-11 rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                        className="pl-10 h-12 rounded-xl border-border/80 bg-muted/40 focus:bg-background focus:ring-2 focus:ring-primary/40 text-sm font-medium"
                         required
                       />
                     </div>
@@ -475,12 +475,12 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="login-password" className="text-xs font-medium text-foreground">
+                      <Label htmlFor="login-password" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         Password
                       </Label>
                       <button
                         type="button"
-                        className="text-xs font-medium text-primary hover:underline"
+                        className="text-xs font-semibold text-primary hover:underline"
                         onClick={() => setShowReset(true)}
                       >
                         Forgot password?
@@ -494,12 +494,12 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-11 rounded-xl border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                        className="pl-10 pr-10 h-12 rounded-xl border-border/80 bg-muted/40 focus:bg-background focus:ring-2 focus:ring-primary/40 text-sm font-medium"
                         required
                       />
                       <button
                         type="button"
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -508,15 +508,15 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                   </div>
 
                   <Button
-                    className="w-full h-11 rounded-xl font-semibold btn-glowing-border mt-2"
+                    className="w-full h-12 rounded-xl font-bold btn-glowing-border shadow-lg shadow-primary/20 text-sm"
                     onClick={handleLogin}
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
                       <>
-                        Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                        Sign In <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}
                   </Button>

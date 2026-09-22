@@ -1,19 +1,24 @@
 import { MongoClient, Db } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
-if (!uri) {
-  throw new Error("MONGODB_URI is not set in environment variables");
-}
-
-const client = new MongoClient(uri);
-
+let client: MongoClient | null = null;
 let db: Db | null = null;
 let indexesCreated = false;
 
+function getClient(): MongoClient {
+  if (client) return client;
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error("MONGODB_URI is not set in environment variables. Please add MONGODB_URI in Vercel Project Settings > Environment Variables.");
+  }
+  client = new MongoClient(uri);
+  return client;
+}
+
 export async function connectMongo(): Promise<Db> {
   if (db) return db;
-  await client.connect();
-  db = client.db();
+  const mongoClient = getClient();
+  await mongoClient.connect();
+  db = mongoClient.db();
 
   // Create TTL index on email_otps collection so OTP records auto-delete after 10 minutes (600s)
   if (!indexesCreated) {
@@ -35,8 +40,9 @@ export async function pingMongo(): Promise<boolean> {
 }
 
 export async function closeMongo(): Promise<void> {
-  if (db) {
+  if (client) {
     await client.close();
+    client = null;
     db = null;
     indexesCreated = false;
   }

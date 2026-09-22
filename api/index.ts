@@ -1,6 +1,6 @@
 import "dotenv/config";
 import cors from "cors";
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import authRoutes from "../server/routes/auth.js";
 import profileRoutes from "../server/routes/profiles.js";
 import projectRoutes from "../server/routes/projects.js";
@@ -29,5 +29,13 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profiles", profileRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/chat", chatRoutes);
+
+// Global Error Handler to catch any unhandled Express errors gracefully
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("[SERVER ERROR]", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+  });
+});
 
 export default app;
