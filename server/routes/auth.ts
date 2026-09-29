@@ -2,12 +2,12 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { ObjectId } from "mongodb";
-import { connectMongo } from "../mongodb";
-import { requireAuth, signToken } from "../middleware/auth";
-import { toIso } from "../serialize";
-import { sendBrevoEmail, getWelcomeEmailHtml, getResetPasswordEmailHtml, getOtpEmailHtml } from "../brevo";
-import type { AuthRequest } from "../middleware/auth";
-import type { ProfileDoc, UserDoc } from "../types";
+import { connectMongo } from "../mongodb.js";
+import { requireAuth, signToken } from "../middleware/auth.js";
+import { toIso } from "../serialize.js";
+import { sendBrevoEmail, getWelcomeEmailHtml, getResetPasswordEmailHtml, getOtpEmailHtml } from "../brevo.js";
+import type { AuthRequest } from "../middleware/auth.js";
+import type { ProfileDoc, UserDoc } from "../types.js";
 
 const router = Router();
 
