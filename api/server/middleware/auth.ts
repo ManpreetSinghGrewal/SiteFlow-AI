@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
-import { connectMongo } from "../mongodb.js";
-import type { UserDoc } from "../types.js";
+import { connectMongo } from "../mongodb";
+import type { UserDoc } from "../types";
 
 function getJwtSecret(): string {
   return process.env.JWT_SECRET || "siteflow-dev-secret-change-in-production";

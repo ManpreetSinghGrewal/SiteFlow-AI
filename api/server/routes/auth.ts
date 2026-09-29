@@ -2,12 +2,12 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { ObjectId } from "mongodb";
-import { connectMongo } from "../mongodb.js";
-import { requireAuth, signToken } from "../middleware/auth.js";
-import { toIso } from "../serialize.js";
-import { sendBrevoEmail, getWelcomeEmailHtml, getResetPasswordEmailHtml, getOtpEmailHtml } from "../brevo.js";
-import type { AuthRequest } from "../middleware/auth.js";
-import type { ProfileDoc, UserDoc } from "../types.js";
+import { connectMongo } from "../mongodb";
+import { requireAuth, signToken } from "../middleware/auth";
+import { toIso } from "../serialize";
+import { sendBrevoEmail, getWelcomeEmailHtml, getResetPasswordEmailHtml, getOtpEmailHtml } from "../brevo";
+import type { AuthRequest } from "../middleware/auth";
+import type { ProfileDoc, UserDoc } from "../types";
 
 const router = Router();
 
@@ -43,16 +43,16 @@ router.post("/send-otp", async (req, res) => {
   // Delete previous pending OTPs for this email
   await otps.deleteMany({ email: normalizedEmail });
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
 
-  console.log(`[SITEFLOW OTP DISPATCH] Email: ${normalizedEmail} | 6-Digit OTP: ${otp}`);
+  console.log(`[SITEFLOW OTP DISPATCH] Email: ${normalizedEmail} | 6-Digit OTP: ${generatedOtp}`);
 
   // Save OTP in MongoDB email_otps collection
   await otps.insertOne({
     email: normalizedEmail,
-    otp,
+    otp: generatedOtp,
     createdAt: now,
     expiresAt,
   });
@@ -60,7 +60,7 @@ router.post("/send-otp", async (req, res) => {
   // Stage or update unverified user doc
   if (existingUser) {
     const updateData: Record<string, any> = {
-      verificationCode: otp,
+      verificationCode: generatedOtp,
       verificationExpiresAt: expiresAt,
       updatedAt: now,
     };
@@ -76,7 +76,7 @@ router.post("/send-otp", async (req, res) => {
       email: normalizedEmail,
       passwordHash,
       isVerified: false,
-      verificationCode: otp,
+      verificationCode: generatedOtp,
       verificationExpiresAt: expiresAt,
       createdAt: now,
       updatedAt: now,
@@ -96,8 +96,8 @@ router.post("/send-otp", async (req, res) => {
   // Dispatch Brevo OTP Email via HTTPS REST API
   const emailResult = await sendBrevoEmail({
     to: [{ email: normalizedEmail }],
-    subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
-    htmlContent: getOtpEmailHtml(otp),
+    subject: `Your SiteFlow AI Verification Code: ${generatedOtp} 🔐`,
+    htmlContent: getOtpEmailHtml(generatedOtp),
   });
 
   if (!emailResult.success) {
@@ -209,7 +209,6 @@ const verifyOtpHandler = async (req: any, res: any) => {
 router.post("/verify-otp", verifyOtpHandler);
 router.post("/verify-email", verifyOtpHandler);
 router.post("/signup", async (req, res) => {
-  // Signup redirects to send-otp
   req.url = "/send-otp";
   router.handle(req, res, () => {});
 });
@@ -237,23 +236,23 @@ router.post("/login", async (req, res) => {
 
   // BLOCK UNVERIFIED ACCOUNTS
   if (user.isVerified === false) {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
     const otps = db.collection<OtpDoc>("email_otps");
     await otps.deleteMany({ email: normalizedEmail });
-    await otps.insertOne({ email: normalizedEmail, otp, createdAt: now, expiresAt });
+    await otps.insertOne({ email: normalizedEmail, otp: generatedOtp, createdAt: now, expiresAt });
 
     await users.updateOne(
       { _id: user._id },
-      { $set: { verificationCode: otp, verificationExpiresAt: expiresAt, updatedAt: now } }
+      { $set: { verificationCode: generatedOtp, verificationExpiresAt: expiresAt, updatedAt: now } }
     );
 
     const emailResult = await sendBrevoEmail({
       to: [{ email: normalizedEmail }],
-      subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
-      htmlContent: getOtpEmailHtml(otp),
+      subject: `Your SiteFlow AI Verification Code: ${generatedOtp} 🔐`,
+      htmlContent: getOtpEmailHtml(generatedOtp),
     });
 
     if (!emailResult.success) {
@@ -296,17 +295,17 @@ router.post("/resend-verification", async (req, res) => {
   const db = await connectMongo();
   const otps = db.collection<OtpDoc>("email_otps");
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
   await otps.deleteMany({ email: normalizedEmail });
-  await otps.insertOne({ email: normalizedEmail, otp, createdAt: now, expiresAt });
+  await otps.insertOne({ email: normalizedEmail, otp: generatedOtp, createdAt: now, expiresAt });
 
   const emailResult = await sendBrevoEmail({
     to: [{ email: normalizedEmail }],
-    subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
-    htmlContent: getOtpEmailHtml(otp),
+    subject: `Your SiteFlow AI Verification Code: ${generatedOtp} 🔐`,
+    htmlContent: getOtpEmailHtml(generatedOtp),
   });
 
   if (!emailResult.success) {
@@ -320,13 +319,13 @@ router.post("/resend-verification", async (req, res) => {
 
 /**
  * POST /api/auth/google
- * Handles Google SSO trigger + 2-phase Brevo OTP verification
+ * Instant Google Authentication (no OTP required).
+ * Registers or logs in user, saves password (if provided), and returns signed JWT token.
  */
 router.post("/google", async (req, res) => {
-  const { email, name, otp, password } = req.body as {
+  const { email, name, password } = req.body as {
     email?: string;
     name?: string;
-    otp?: string;
     password?: string;
   };
 
@@ -334,44 +333,68 @@ router.post("/google", async (req, res) => {
     return res.status(400).json({ error: "Google email address is required" });
   }
 
-  if (otp) {
-    // Phase 2: verify OTP code
-    return verifyOtpHandler(req, res);
-  }
-
-  // Phase 1: send OTP code
   const normalizedEmail = email.trim().toLowerCase();
   const db = await connectMongo();
-  const otps = db.collection<OtpDoc>("email_otps");
   const users = db.collection<UserDoc>("users");
-
-  const existingUser = await users.findOne({ email: normalizedEmail });
-
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
-  await otps.deleteMany({ email: normalizedEmail });
-  await otps.insertOne({ email: normalizedEmail, otp, createdAt: now, expiresAt });
+  let user = await users.findOne({ email: normalizedEmail });
 
-  const emailResult = await sendBrevoEmail({
-    to: [{ email: normalizedEmail }],
-    subject: `Your SiteFlow AI Verification Code: ${otp} 🔐`,
-    htmlContent: getOtpEmailHtml(otp),
-  });
+  if (!user) {
+    const userId = new ObjectId();
+    const passwordHash = password && password.length >= 6 ? await bcrypt.hash(password, 12) : "";
+    const displayName = name?.trim() || normalizedEmail.split("@")[0];
 
-  if (!emailResult.success) {
-    return res.status(400).json({
-      error: emailResult.error || "BREVO_API_KEY is not configured on Vercel. Add BREVO_API_KEY under Vercel Settings > Environment Variables.",
+    await users.insertOne({
+      _id: userId,
+      email: normalizedEmail,
+      passwordHash,
+      isVerified: true,
+      verificationCode: null,
+      verificationExpiresAt: null,
+      createdAt: now,
+      updatedAt: now,
     });
+
+    const profiles = db.collection<ProfileDoc>("profiles");
+    await profiles.insertOne({
+      _id: userId,
+      userId,
+      display_name: displayName,
+      business_name: null,
+      created_at: now,
+      updated_at: now,
+    });
+
+    user = (await users.findOne({ _id: userId }))!;
+
+    sendBrevoEmail({
+      to: [{ email: normalizedEmail, name: displayName }],
+      subject: "Welcome to SiteFlow AI! 🚀",
+      htmlContent: getWelcomeEmailHtml(displayName),
+    }).catch((err) => console.error("Welcome email error:", err));
+  } else {
+    const updateData: Record<string, any> = {
+      isVerified: true,
+      verificationCode: null,
+      verificationExpiresAt: null,
+      updatedAt: now,
+    };
+    if (password && password.length >= 6) {
+      updateData.passwordHash = await bcrypt.hash(password, 12);
+    }
+    await users.updateOne({ _id: user._id }, { $set: updateData });
   }
 
+  const token = signToken(user._id);
+
   res.json({
-    requiresOtp: true,
-    isNewUser: !existingUser || !existingUser.isVerified,
-    email: normalizedEmail,
-    name: name || normalizedEmail.split("@")[0],
-    message: "Google authentication code dispatched to your email!",
+    token,
+    user: {
+      id: user._id.toString(),
+      email: user.email,
+      created_at: toIso(user.createdAt),
+    },
   });
 });
 

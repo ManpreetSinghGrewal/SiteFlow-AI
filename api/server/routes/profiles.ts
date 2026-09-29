@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { connectMongo } from "../mongodb.js";
-import { requireAuth } from "../middleware/auth.js";
-import { serializeProfile } from "../serialize.js";
-import type { AuthRequest } from "../middleware/auth.js";
-import type { ProfileDoc } from "../types.js";
+import { connectMongo } from "../mongodb";
+import { requireAuth } from "../middleware/auth";
+import { serializeProfile } from "../serialize";
+import type { AuthRequest } from "../middleware/auth";
+import type { ProfileDoc } from "../types";
 
 const router = Router();
 

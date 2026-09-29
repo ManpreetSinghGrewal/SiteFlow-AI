@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth";
 
 const SYSTEM_PROMPT = `You are SiteFlow AI — a fast, intelligent, and adaptable website builder chatbot.
 

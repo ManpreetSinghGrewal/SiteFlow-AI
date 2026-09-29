@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import type { Profile, ProfileDoc, Project, ProjectDoc } from "./types.js";
+import type { Profile, ProfileDoc, Project, ProjectDoc } from "./types";
 
 export function toIso(date: Date): string {
   return date.toISOString();

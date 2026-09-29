@@ -24,7 +24,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   
-  // OTP Verification Step & 60s Cooldown Timer
+  // OTP Verification Step & 60s Cooldown Timer (For Email Sign Up)
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otp, setOtp] = useState("");
   const [cooldown, setCooldown] = useState(60);
@@ -116,6 +116,10 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /**
+   * INSTANT GOOGLE AUTH (NO OTP REQUIRED)
+   * Logs in directly with Google, sets password if provided, and returns JWT session token
+   */
   const handleGoogleSignIn = async () => {
     let googleEmail = email.trim();
     if (!googleEmail || !googleEmail.includes("@")) {
@@ -127,13 +131,17 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
-      await apiFetch<{ requiresOtp: boolean; message: string }>("/api/auth/google", {
+      const data = await apiFetch<AuthResponse>("/api/auth/google", {
         method: "POST",
-        body: JSON.stringify({ email: googleEmail }),
+        body: JSON.stringify({ email: googleEmail, password }),
       });
 
-      startOtpFlow();
-      toast.success(`🚀 Google verification code sent to ${googleEmail}!`);
+      setToken(data.token);
+      await refreshUser();
+
+      toast.success("🎉 Logged in with Google! Password saved for future direct sign-in.");
+      setIsOpen(false);
+      resetForm();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Google sign-in failed";
       toast.error(message);
@@ -283,7 +291,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
               )}
             </div>
           ) : isOtpStep ? (
-            /* STEP 2: 6-DIGIT OTP VERIFICATION + PASSWORD SETUP SCREEN (WITH 60S COOLDOWN) */
+            /* STEP 2: 6-DIGIT OTP VERIFICATION + PASSWORD SETUP SCREEN (FOR EMAIL SIGN UP) */
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="otp-input" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -365,9 +373,9 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           ) : (
-            /* STEP 1: SIGN UP / SIGN IN TABS WITH GOOGLE OPTION */
+            /* STEP 1: SIGN UP / SIGN IN TABS WITH INSTANT GOOGLE SSO */
             <div className="space-y-4">
-              {/* GOOGLE 1-CLICK SSO BUTTON */}
+              {/* GOOGLE 1-CLICK INSTANT SSO BUTTON */}
               <Button
                 type="button"
                 variant="outline"
@@ -513,7 +521,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
                       <>
-                        Sign In <ArrowRight className="ml-2 h-5 w-5" />
+                        Sign In <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
                   </Button>
